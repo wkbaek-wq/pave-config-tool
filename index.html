@@ -1790,18 +1790,33 @@ function buildColumn(skus, idx, meta = null) {
   }, 0);
   const exposedTier = drawerFlapTier + exposedExtraTier;
 
-  // 부품 표시 순서 초기화 (위→아래): 플랩 → 몸통 큰단수 → 오픈장 → 몸통 작은단수 → 서랍 → (도어는 마지막)
+  // 부품 표시 순서 (위→아래) — 페이브 표준 배치 규칙
+  // · 몸통 1개 + 오픈/플랩: 오픈/플랩 상단, 몸통, 서랍 하단 (긴장·서랍 긴장)
+  // · 몸통 2개 이상 + 오픈/서랍 중간 부품: 큰 몸통 상단, 오픈·서랍 중간, 작은 몸통 하단
+  //   (중간 선반장: 몸통-오픈-몸통 / 중간 서랍장: 몸통-서랍-몸통)
+  // · 몸통 2개 이상 + 중간 부품 없음: 큰 몸통 상단, 작은 몸통 하단 (짧은장)
   const order = [];
-  for (const f of items.flap) order.push(f.id);
   const bodies = [...items.body].sort((a,b)=>b.tier-a.tier);
-  if (bodies.length > 0) {
+
+  if (bodies.length === 1 && (items.flap.length > 0 || items.open.length > 0)) {
+    // ▼ 긴장 / 서랍 긴장: 오픈·플랩이 상단, 서랍은 하단
+    for (const f of items.flap) order.push(f.id);
+    for (const o of items.open) order.push(o.id);
     order.push(bodies[0].id);
-    for (const o of items.open) order.push(o.id);
-    for (let i = 1; i < bodies.length; i++) order.push(bodies[i].id);
+    for (const d of items.drawer) order.push(d.id);
+  } else if (bodies.length >= 2) {
+    // ▼ 짧은장 / 중간 선반장 / 중간 서랍장 등: 중간 부품은 큰 몸통과 작은 몸통 사이
+    for (const f of items.flap) order.push(f.id);
+    order.push(bodies[0].id);                        // 큰 몸통 (위)
+    for (const o of items.open) order.push(o.id);    // 오픈 (중간)
+    for (const d of items.drawer) order.push(d.id);  // 서랍 (중간)
+    for (let i = 1; i < bodies.length; i++) order.push(bodies[i].id); // 작은 몸통(들) (아래)
   } else {
+    // ▼ 몸통 없는 경우 (부속 옵션 등)
+    for (const f of items.flap) order.push(f.id);
     for (const o of items.open) order.push(o.id);
+    for (const d of items.drawer) order.push(d.id);
   }
-  for (const d of items.drawer) order.push(d.id);
   for (const d of items.door) order.push(d.id);
   for (const d of items.glass) order.push(d.id);
   for (const d of items.mirror) order.push(d.id);
@@ -1829,13 +1844,28 @@ function arrangeInternals(col) {
     }
     return result;
   }
-  // 폴백: 기본 순서
+  // 폴백: buildColumn order 결정 로직과 동일 규칙 적용
   const parts = [];
-  for (const f of col.items.flap)  parts.push({ kind: 'flap',   tier: f.tier, label: '플랩장' });
-  for (const o of col.items.open)  parts.push({ kind: 'open',   tier: o.tier, label: '오픈장' });
   const bodies = [...col.items.body].sort((a,b)=>b.tier-a.tier);
-  for (const b of bodies) parts.push({ kind: 'body', tier: b.tier, label: `몸통 ${b.tier}단` });
-  for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
+
+  if (bodies.length === 1 && (col.items.flap.length > 0 || col.items.open.length > 0)) {
+    // 긴장 / 서랍 긴장: 오픈/플랩 상단, 서랍 하단
+    for (const f of col.items.flap)  parts.push({ kind: 'flap', tier: f.tier, label: '플랩장' });
+    for (const o of col.items.open)  parts.push({ kind: 'open', tier: o.tier, label: '오픈장' });
+    parts.push({ kind: 'body', tier: bodies[0].tier, label: `몸통 ${bodies[0].tier}단` });
+    for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
+  } else if (bodies.length >= 2) {
+    // 짧은장 / 중간 선반장 / 중간 서랍장: 중간 부품(오픈·서랍)은 큰 몸통과 작은 몸통 사이
+    for (const f of col.items.flap) parts.push({ kind: 'flap', tier: f.tier, label: '플랩장' });
+    parts.push({ kind: 'body', tier: bodies[0].tier, label: `몸통 ${bodies[0].tier}단` });
+    for (const o of col.items.open) parts.push({ kind: 'open', tier: o.tier, label: '오픈장' });
+    for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
+    for (let i = 1; i < bodies.length; i++) parts.push({ kind: 'body', tier: bodies[i].tier, label: `몸통 ${bodies[i].tier}단` });
+  } else {
+    for (const f of col.items.flap)  parts.push({ kind: 'flap', tier: f.tier, label: '플랩장' });
+    for (const o of col.items.open)  parts.push({ kind: 'open', tier: o.tier, label: '오픈장' });
+    for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
+  }
   return parts;
 }
 
