@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>페이브 옷장 구성도 생성기</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+    background: #f5f6f8;
+    margin: 0;
+    padding: 24px;
+    color: #222;
+    line-height: 1.5;
+  }
+  .container { max-width: 1240px; margin: 0 auto; }
+  header { margin-bottom: 28px; }
+  h1 { font-size: 28px; margin: 0 0 6px 0; color: #1a1a1a; }
+  .subtitle { color: #666; margin: 0; font-size: 15px; }
+
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    font-size: 18px;
+    margin: 0 0 16px 0;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card .hint { color: #666; font-size: 13px; margin: -8px 0 12px 0; }
+
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    border: 1.5px solid #e0e3e8;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 13px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  textarea:focus { outline: none; border-color: #4f7cf6; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: #1a1a1a; color: white; }
+  .btn-primary:hover { background: #333; }
+  .btn-secondary { background: #f0f2f5; color: #333; }
+  .btn-secondary:hover { background: #e4e7eb; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 880px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .stat {
+    background: #f8f9fb;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border-left: 3px solid #4f7cf6;
+  }
+  .stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: #1a1a1a; }
+
+  .validation { display: grid; gap: 10px; }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+  .check.pass { background: #ecfdf5; color: #047857; }
+  .check.warn { background: #fffbeb; color: #b45309; }
+  .check.fail { background: #fef2f2; color: #b91c1c; }
+  .check-icon { font-size: 18px; }
+
+  #diagram-area {
+    background: #fafbfc;
+    border-radius: 10px;
+    padding: 16px;
+    overflow-x: auto;
+  }
+
+  /* 사진 비교 */
+  .photo-drop {
+    border: 2px dashed #cfd4dc;
+    border-radius: 10px;
+    padding: 28px 16px;
+    text-align: center;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fafbfc;
+  }
+  .photo-drop:hover, .photo-drop.dragover {
+    border-color: #4f7cf6;
+    background: #f0f5ff;
+    color: #4f7cf6;
+  }
+  .photo-drop .icon { font-size: 28px; margin-bottom: 6px; }
+  .photo-drop .small { font-size: 12px; color: #aaa; margin-top: 6px; }
+  .photo-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .photo-actions .filename { color: #666; font-size: 13px; }
+
+  .compare-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .compare-container.has-photo {
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 1024px) {
+    .compare-container.has-photo { grid-template-columns: 1fr; }
+  }
+  .compare-pane {
+    background: #fafbfc;
+    border-radius: 10px;
+    padding: 14px;
+    overflow-x: auto;
+  }
+  .compare-label {
+    font-size: 12px;
+    color: #555;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .compare-pane img {
+    max-width: 100%;
+    max-height: 600px;
+    display: block;
+    margin: 0 auto;
+    border-radius: 6px;
+  }
+
+  /* 드래그 편집기 */
+  .editor-hint {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #78350f;
+    margin-bottom: 14px;
+  }
+  .columns-editor {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 8px 4px 14px;
+  }
+  .col-edit {
+    flex-shrink: 0;
+    background: white;
+    border: 1.5px solid #e0e3e8;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* 실제 폭 비율(400:600 = 2:3) 반영 */
+  .col-edit.w400 { width: 130px; }
+  .col-edit.w600 { width: 195px; }
+  /* 호환 안 되는 드롭 타겟 */
+  .parts-drop-zone.drag-over-invalid,
+  .staging-row.drag-over-invalid {
+    background: #fef2f2 !important;
+    outline: 2px dashed #ef4444 !important;
+    outline-offset: -3px;
+  }
+  .parts-drop-zone.drag-over-invalid::before,
+  .staging-row.drag-over-invalid::before {
+    content: "⛔ 폭이 달라 이동 불가";
+    display: block;
+    color: #b91c1c;
+    font-weight: 700;
+    font-size: 11px;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .col-edit-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4f7cf6;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #eef0f3;
+    text-align: center;
+  }
+  .col-move-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .col-move-btn {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .col-move-btn:hover:not(:disabled) {
+    background: #4f7cf6;
+    border-color: #4f7cf6;
+    color: white;
+  }
+  .col-move-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+  .col-name {
+    flex: 1;
+    text-align: center;
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 13px;
+  }
+  .col-edit-tier {
+    font-size: 11px;
+    color: #666;
+    font-weight: 500;
+  }
+  .col-edit-tier.ok { color: #047857; }
+  .col-edit-tier.fail { color: #b91c1c; }
+  .parts-drop-zone {
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .parts-drop-zone.drag-over {
+    background: #eff6ff;
+    outline: 2px dashed #4f7cf6;
+    outline-offset: -3px;
+  }
+  .part-card {
+    padding: 7px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: grab;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 3px solid #888;
+    background: #f0f2f5;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+  .part-card:active { cursor: grabbing; transform: scale(0.96); }
+  .part-card.dragging { opacity: 0.4; }
+  /* 끼워넣기 위치 표시선 */
+  .part-card.drop-above {
+    box-shadow: 0 -3px 0 0 #4f7cf6;
+    margin-top: 4px;
+  }
+  .part-card.drop-below {
+    box-shadow: 0 3px 0 0 #4f7cf6;
+    margin-bottom: 4px;
+  }
+  .part-card.drop-invalid {
+    box-shadow: 0 0 0 2px #ef4444;
+    background: #fef2f2 !important;
+  }
+  .part-card.door, .part-card.glass, .part-card.mirror {
+    background: #faf3e3; border-color: #b89436; color: #5a4500;
+  }
+  .part-card.body { background: #e8e8e8; border-color: #2c2c2c; color: #333; }
+  .part-card.open { background: #d4d4d4; border-color: #4a4a4a; color: #222; }
+  .part-card.open.exposed { background: #1a1a1a; color: #FFD18A; border-color: #000; }
+  .part-card.drawer, .part-card.flap { background: #e8d8b8; border-color: #5a4f3f; color: #4a3a20; }
+  .toggle-btn {
+    padding: 2px 6px;
+    border: 1px solid #888;
+    background: white;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 6px;
+  }
+  .toggle-btn:hover { background: #f0f5ff; border-color: #4f7cf6; }
+  kbd {
+    background: #f0f2f5;
+    border: 1px solid #d0d4da;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-family: monospace;
+  }
+  /* 임시 보관함 */
+  .staging-row {
+    background: #fafbfc;
+    border: 2px dashed #d0d4da;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    transition: all 0.15s;
+    min-height: 70px;
+  }
+  .staging-row.drag-over {
+    background: #eff6ff;
+    border-color: #4f7cf6;
+    border-style: solid;
+  }
+  .staging-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .staging-header .count {
+    background: #4f7cf6;
+    color: white;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 10px;
+  }
+  .staging-parts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 36px;
+    align-items: flex-start;
+  }
+  .staging-empty {
+    color: #aaa;
+    font-size: 12px;
+    padding: 6px;
+    font-style: italic;
+  }
+  .cols-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 8px 4px 14px;
+  }
+  .card-actions { display: flex; gap: 3px; align-items: center; }
+  .move-btn {
+    width: 22px; height: 22px; padding: 0;
+    border: 1px solid #ccc; background: white; border-radius: 4px;
+    font-size: 13px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #555;
+  }
+  .move-btn:hover { background: #f0f5ff; border-color: #4f7cf6; color: #4f7cf6; }
+  .part-label { flex: 1; margin-right: 6px; }
+  .part-w { font-size: 9px; opacity: 0.6; margin-left: 3px; }
+  .empty-zone {
+    color: #aaa; font-size: 11px; font-style: italic;
+    text-align: center; padding: 20px 8px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+    font-size: 15px;
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+
+  .parts-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .parts-table th, .parts-table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eef0f3;
+  }
+  .parts-table th { background: #fafbfc; font-weight: 600; color: #555; }
+  .parts-table .col-qty { text-align: right; font-variant-numeric: tabular-nums; }
+  .parts-table .col-code { font-family: monospace; color: #555; }
+  .unknown-sku {
+    background: #fef2f2;
+    color: #b91c1c;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+  .tag-white { background: #faf3e3; color: #8a6d20; }
+  .tag-black { background: #2c2c2c; color: white; }
+  .tag-pre { background: #dbeafe; color: #1d4ed8; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🪟 페이브 옷장 구성도 생성기</h1>
+    <p class="subtitle">주문된 SKU 리스트를 붙여넣으면 외부·내부 구성도가 자동 생성됩니다</p>
+  </header>
+
+  <div class="card">
+    <h2>1️⃣ SKU 리스트 붙여넣기</h2>
+    <p class="hint">주문 시스템·엑셀에서 그대로 복사해 붙여넣으세요. <b>SKU 코드만 자동 인식</b>합니다 (주문번호/상품명 함께 있어도 OK). 엑셀 <b>수량 컬럼</b>(SKU 바로 옆 셀)도 자동 반영됩니다. 컬럼은 <b>좌대 개수 + 5단 규칙으로 자동 분리</b>됩니다.</p>
+    <textarea id="input" placeholder="예시 — SKU 코드만 한 줄씩 붙여넣으세요:&#10;100111564&#10;100111572&#10;100111574&#10;100111580&#10;100111580&#10;100111591&#10;100111593&#10;100111565&#10;100111567&#10;100111571&#10;100111575&#10;100111581&#10;100111588&#10;..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generate()">▶ 구성도 생성</button>
+      <button class="btn btn-secondary" onclick="loadExample(1)">예시 1 (1600mm 3컬럼)</button>
+      <button class="btn btn-secondary" onclick="loadExample(2)">예시 2 (2400mm 4컬럼)</button>
+      <button class="btn btn-secondary" onclick="clearAll()">지우기</button>
+    </div>
+  </div>
+
+  <!-- 사진 첨부 -->
+  <div class="card">
+    <h2>📷 참조 사진 첨부 (선택)</h2>
+    <p class="hint">실제 옷장 사진을 첨부하면 생성된 구성도와 <b>나란히</b> 비교할 수 있어 검수 정확도가 올라갑니다. 파일 선택, 드래그앤드롭, 또는 클립보드 붙여넣기(<kbd>Cmd/Ctrl+V</kbd>) 모두 지원합니다.</p>
+    <div class="photo-drop" id="photo-drop" onclick="document.getElementById('photo-input').click()">
+      <div class="icon">🖼️</div>
+      <div><b>여기를 클릭</b>하거나 사진을 끌어다 놓으세요</div>
+      <div class="small">JPG · PNG · WebP 등 이미지 파일</div>
+    </div>
+    <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhotoFile(this.files[0])">
+    <div class="photo-actions">
+      <button class="btn btn-secondary" id="photo-clear-btn" onclick="clearPhoto()" style="display:none">✕ 사진 제거</button>
+      <span class="filename" id="photo-filename"></span>
+    </div>
+  </div>
+
+  <div id="results" style="display:none;">
+    <div class="card">
+      <h2>2️⃣ 주문 요약</h2>
+      <div class="grid-2">
+        <div class="stat">
+          <div class="stat-label">총 폭</div>
+          <div class="stat-value"><span id="stat-width">-</span>mm</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">컬럼 수</div>
+          <div class="stat-value"><span id="stat-cols">-</span>개</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3️⃣ 검증 결과</h2>
+      <div id="validation" class="validation"></div>
+    </div>
+
+    <div class="card">
+      <h2>4️⃣ 구성도 (생성 도면 ↔ 실제 사진 비교)</h2>
+      <p class="hint">사진을 첨부하면 좌측에 생성 도면, 우측에 실제 사진이 나란히 표시됩니다.</p>
+      <div class="compare-container" id="compare-container">
+        <div class="compare-pane">
+          <div class="compare-label">📐 생성된 도면</div>
+          <div id="diagram-area"></div>
+        </div>
+        <div class="compare-pane" id="photo-compare-pane" style="display:none;">
+          <div class="compare-label">📷 실제 사진</div>
+          <img id="photo-compare-img" alt="실제 옷장 사진"/>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="downloadPNG()">📥 최종 도면 다운로드 (PNG)</button>
+      </div>
+    </div>
+
+    <!-- 드래그 편집기 -->
+    <div class="card">
+      <h2>✏️ 구성 편집 (드래그로 사진과 일치시키기)</h2>
+      <div class="editor-hint">
+        💡 <b>사용법</b><br>
+        · 부품 순서 변경: <b>드래그로 끼워넣기</b> (파란 선 = 끼워넣을 위치) <b>또는</b> 카드의 <b>↑ ↓ 버튼</b><br>
+        · 다른 컬럼으로 이동: 카드를 컬럼 사이에 드래그 (빈 공간 = 맨 끝, 카드 위 = 그 위/아래)<br>
+        · <b>오픈장·몸통 카드의 [도어형/오픈형] 버튼</b> = 도어 가림 ↔ 도어 X 노출 전환 (1단 외에도 2/3/4단 몸통 오픈형 지원)<br>
+        · 컬럼 위치 변경: 헤더의 <b>← →</b> 버튼 (폭 제약 없음)<br>
+        · 400 부품은 400 컬럼끼리만, 600은 600끼리만 이동 가능
+      </div>
+      <div class="columns-editor" id="columns-editor"></div>
+    </div>
+
+    <div class="card">
+      <h2>5️⃣ 부품 합계</h2>
+      <table class="parts-table">
+        <thead>
+          <tr><th>SKU 코드</th><th>부품명</th><th class="col-qty">수량</th></tr>
+        </thead>
+        <tbody id="parts-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="empty" class="card">
+    <div class="empty-state">
+      <div class="icon">📋</div>
+      <div>위 입력란에 SKU 리스트를 붙여넣고 "구성도 생성" 버튼을 눌러주세요</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SKU_DB = {
+  '100111583': { name: '도어 / 2단 400 / 웜화이트',     type: 'door',   tier: 2, width: 400, color: 'white' },
+  '100111584': { name: '도어 / 2단 600 / 웜화이트',     type: 'door',   tier: 2, width: 600, color: 'white' },
+  '100111585': { name: '도어 / 3단 400 / 웜화이트',     type: 'door',   tier: 3, width: 400, color: 'white' },
+  '100111586': { name: '도어 / 3단 600 / 웜화이트',     type: 'door',   tier: 3, width: 600, color: 'white' },
+  '100111587': { name: '도어 / 4단 400 / 웜화이트',     type: 'door',   tier: 4, width: 400, color: 'white' },
+  '100111588': { name: '도어 / 4단 600 / 웜화이트',     type: 'door',   tier: 4, width: 600, color: 'white' },
+  '100111589': { name: '도어 / 5단 400 / 웜화이트',     type: 'door',   tier: 5, width: 400, color: 'white' },
+  '100111590': { name: '도어 / 5단 600 / 웜화이트',     type: 'door',   tier: 5, width: 600, color: 'white' },
+  '100111591': { name: '유리도어 / 5단 400 / 차콜블랙', type: 'glass',  tier: 5, width: 400, color: 'charcoal' },
+  '100111592': { name: '거울도어 / 5단 400 / 차콜블랙', type: 'mirror', tier: 5, width: 400, color: 'charcoal' },
+  // 핸들형 도어 (신규)
+  '100113225': { name: '도어 / 4단 400 / 웜화이트 / 핸들형', type: 'door', tier: 4, width: 400, color: 'white', variant: 'handle' },
+  '100113226': { name: '도어 / 4단 600 / 웜화이트 / 핸들형', type: 'door', tier: 4, width: 600, color: 'white', variant: 'handle' },
+  '100113227': { name: '도어 / 5단 400 / 웜화이트 / 핸들형', type: 'door', tier: 5, width: 400, color: 'white', variant: 'handle' },
+  '100113228': { name: '도어 / 5단 600 / 웜화이트 / 핸들형', type: 'door', tier: 5, width: 600, color: 'white', variant: 'handle' },
+  '100111572': { name: '몸통 / 2단 400 / 차콜블랙',     type: 'body',   tier: 2, width: 400, color: 'charcoal' },
+  '100111573': { name: '몸통 / 2단 600 / 차콜블랙',     type: 'body',   tier: 2, width: 600, color: 'charcoal' },
+  '100111574': { name: '몸통 / 3단 400 / 차콜블랙',     type: 'body',   tier: 3, width: 400, color: 'charcoal' },
+  '100111575': { name: '몸통 / 3단 600 / 차콜블랙',     type: 'body',   tier: 3, width: 600, color: 'charcoal' },
+  '100111576': { name: '몸통 / 4단 400 / 차콜블랙',     type: 'body',   tier: 4, width: 400, color: 'charcoal' },
+  '100111577': { name: '몸통 / 4단 600 / 차콜블랙',     type: 'body',   tier: 4, width: 600, color: 'charcoal' },
+  '100111570': { name: '서랍장 / 1단 400 / 웜화이트',   type: 'drawer', tier: 1, width: 400, color: 'white',    pre: true },
+  '100111571': { name: '서랍장 / 1단 600 / 웜화이트',   type: 'drawer', tier: 1, width: 600, color: 'white',    pre: true },
+  '100111568': { name: '플랩장 / 1단 400 / 웜화이트',   type: 'flap',   tier: 1, width: 400, color: 'white',    pre: true },
+  '100111569': { name: '플랩장 / 1단 600 / 웜화이트',   type: 'flap',   tier: 1, width: 600, color: 'white',    pre: true },
+  '100111566': { name: '오픈장 / 1단 400 / 차콜블랙',   type: 'open',   tier: 1, width: 400, color: 'charcoal', pre: true },
+  '100111567': { name: '오픈장 / 1단 600 / 차콜블랙',   type: 'open',   tier: 1, width: 600, color: 'charcoal', pre: true },
+  '100111564': { name: '좌대 / 400 / 차콜블랙',         type: 'base', width: 400, color: 'charcoal', pre: true },
+  '100111565': { name: '좌대 / 600 / 차콜블랙',         type: 'base', width: 600, color: 'charcoal', pre: true },
+  '100115158': { name: '좌대 / 일반형 / 400 / 차콜블랙', type: 'base', width: 400, color: 'charcoal', variant: 'normal', pre: true },
+  '100115160': { name: '좌대 / 일반형 / 600 / 차콜블랙', type: 'base', width: 600, color: 'charcoal', variant: 'normal', pre: true },
+  // 좌대 서랍형 (신규) - 좌대 안에 서랍 1단 내장
+  '100115159': { name: '좌대 / 서랍형 / 400 / 차콜블랙', type: 'base', width: 400, color: 'charcoal', variant: 'drawer', pre: true },
+  '100115161': { name: '좌대 / 서랍형 / 600 / 차콜블랙', type: 'base', width: 600, color: 'charcoal', variant: 'drawer', pre: true },
+  '100111580': { name: '옷걸이봉 / 400',                type: 'rod',   width: 400 },
+  '100111581': { name: '옷걸이봉 / 600',                type: 'rod',   width: 600 },
+  '100111578': { name: '이동선반 / 400 / 차콜블랙',     type: 'shelf', width: 400, color: 'charcoal' },
+  '100111579': { name: '이동선반 / 600 / 차콜블랙',     type: 'shelf', width: 600, color: 'charcoal' },
+  '100111593': { name: '부속품 모음',                   type: 'accessory' }
+};
+
+const EXAMPLES = {
+  1: `100111564
+100111572
+100111574
+100111580
+100111580
+100111591
+100111593
+100111565
+100111567
+100111571
+100111575
+100111581
+100111588
+100111593
+100111565
+100111567
+100111571
+100111575
+100111581
+100111588
+100111593`,
+  2: `100111567
+100111567
+100111573
+100111573
+100111575
+100111575
+100111577
+100111577
+100111579
+100111579
+100111581
+100111581
+100111581
+100111581
+100111581
+100111581
+100111590
+100111590
+100111590
+100111590
+100111593
+100115160
+100115160
+100115160
+100115160`
+};
+
+function parseInput(text) {
+  const lines = text.split('\n');
+  const blocks = [];
+  let current = [];
+  const hasProductKeyword = /제품/.test(text);
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line === '제품' || line.startsWith('제품')) {
+      if (current.length > 0) { blocks.push(current); current = []; }
+      continue;
+    }
+    // 8-9자리 숫자 모두 추출 후 DB에 있는 SKU 우선 선택
+    // (주문번호/타임스탬프 등 다른 번호가 같이 있어도 SKU 정확히 잡음)
+    const skuMatches = line.match(/\d{8,9}/g);
+    if (!skuMatches) continue;
+    const sku = skuMatches.find(n => SKU_DB[n]) || skuMatches[0];
+
+    // 엑셀 수량 컬럼 자동 인식: SKU 셀 바로 다음 필드(탭 구분)가 1~99 정수면 수량으로 처리
+    let qty = 1;
+    const fields = raw.split('\t');
+    if (fields.length >= 2) {
+      const skuFieldIdx = fields.findIndex(f => {
+        const t = f.trim();
+        return t === sku || (/^\d{8,9}$/.test(t) && SKU_DB[t]);
+      });
+      if (skuFieldIdx >= 0 && skuFieldIdx + 1 < fields.length) {
+        const nextField = fields[skuFieldIdx + 1].trim();
+        const qtyMatch = nextField.match(/^(\d{1,2})$/);
+        if (qtyMatch) {
+          const q = parseInt(qtyMatch[1], 10);
+          if (q >= 1 && q <= 99) qty = q;
+        }
+      }
+    }
+    for (let i = 0; i < qty; i++) current.push(sku);
+  }
+  if (current.length > 0) blocks.push(current);
+
+  // 명시적 "제품" 구분자가 있으면 그대로 사용
+  if (hasProductKeyword && blocks.length > 1) return blocks;
+
+  // 그 외에는 전체 SKU를 평탄화 후 자동 분리
+  const allSkus = blocks.flat();
+  if (allSkus.length === 0) return [];
+  return autoSplit(allSkus);
+}
+
+// ====================== 평탄 SKU 리스트 → 컬럼 자동 분리 ======================
+function autoSplit(skus) {
+  // 1) 타입별로 분류
+  const byType = { door:[], glass:[], mirror:[], body:[], open:[], drawer:[], flap:[], base:[], rod:[], shelf:[], accessory:[], unknown:[] };
+  for (const sku of skus) {
+    const info = SKU_DB[sku];
+    if (!info) { byType.unknown.push(sku); continue; }
+    byType[info.type].push(sku);
+  }
+
+  const bases = byType.base;
+  if (bases.length === 0) return [skus]; // 좌대 없으면 단일 컬럼으로 처리
+
+  // 2) 좌대 1개 = 컬럼 1개 (좌대 폭으로 컬럼 폭 결정)
+  const columns = bases.map(b => ({ width: SKU_DB[b].width, skus: [b] }));
+
+  // 3) 내부 단수 부품 먼저 분배 (몸통/오픈장/서랍장/플랩장)
+  //    큰 단수부터 같은 폭 컬럼 중 단수 적은 곳에 채움 (5단 규칙)
+  const tierParts = [...byType.body, ...byType.open, ...byType.drawer, ...byType.flap]
+    .sort((a, b) => SKU_DB[b].tier - SKU_DB[a].tier);
+  for (const sku of tierParts) {
+    const info = SKU_DB[sku];
+    const w = info.width, t = info.tier;
+    const candidates = columns
+      .filter(c => c.width === w && countTier(c.skus) + t <= 5)
+      .sort((a, b) => countTier(a.skus) - countTier(b.skus));
+    if (candidates.length > 0) {
+      candidates[0].skus.push(sku);
+    } else {
+      const fallback = columns.find(c => c.width === w) || columns[0];
+      fallback.skus.push(sku);
+    }
+  }
+
+  // 4) 각 컬럼의 도어 필요 단수 계산
+  //    도어가 가리는 영역 = 5 - (서랍장 + 플랩장 노출분)
+  columns.forEach(c => {
+    const exposedTier = c.skus.reduce((sum, s) => {
+      const info = SKU_DB[s];
+      if (info && (info.type === 'drawer' || info.type === 'flap')) return sum + info.tier;
+      return sum;
+    }, 0);
+    c.doorTierNeeded = 5 - exposedTier;
+  });
+
+  // 5) 도어 분배 — 폭 + 필요 단수 정확 매칭 우선
+  const doorPool = [...byType.door, ...byType.glass, ...byType.mirror]
+    .sort((a, b) => SKU_DB[b].tier - SKU_DB[a].tier);
+
+  // 5-1) 단일 도어로 정확히 채울 수 있는 컬럼 우선 처리
+  for (const col of columns) {
+    if (col.doorTierNeeded <= 0) continue;
+    const idx = doorPool.findIndex(s => SKU_DB[s].width === col.width && SKU_DB[s].tier === col.doorTierNeeded);
+    if (idx >= 0) {
+      col.skus.push(doorPool.splice(idx, 1)[0]);
+      col.doorTierNeeded = 0;
+    }
+  }
+  // 5-2) 도어 조합으로 채우기 (큰 단수부터 그리디)
+  for (const col of columns) {
+    while (col.doorTierNeeded > 0) {
+      const idx = doorPool.findIndex(s => SKU_DB[s].width === col.width && SKU_DB[s].tier <= col.doorTierNeeded);
+      if (idx === -1) break;
+      const sku = doorPool.splice(idx, 1)[0];
+      col.skus.push(sku);
+      col.doorTierNeeded -= SKU_DB[sku].tier;
+    }
+  }
+  // 5-3) 남은 도어 — 폭 매칭되는 곳에 (5단 초과될 수 있음, 검증으로 표시)
+  for (const sku of doorPool) {
+    const w = SKU_DB[sku].width;
+    const target = columns.find(c => c.width === w) || columns[0];
+    target.skus.push(sku);
+  }
+
+  // 5) 옷걸이봉 (몸통 개수만큼)
+  for (const sku of byType.rod) {
+    const w = SKU_DB[sku].width;
+    const target = columns.find(c => c.width === w && countBodies(c.skus) > countRods(c.skus))
+                || columns.find(c => c.width === w)
+                || columns[0];
+    target.skus.push(sku);
+  }
+
+  // 6) 이동선반 (4단 몸통 있는 컬럼 우선)
+  for (const sku of byType.shelf) {
+    const w = SKU_DB[sku].width;
+    const target = columns.find(c => c.width === w && hasUnshelvedBody4(c.skus))
+                || columns.find(c => c.width === w)
+                || columns[0];
+    target.skus.push(sku);
+  }
+
+  // 7) 부속품 모음 (컬럼별 1개씩 균등)
+  byType.accessory.forEach((sku, i) => { columns[i % columns.length].skus.push(sku); });
+
+  // 8) 미등록 SKU는 첫 컬럼에 표시 (사용자 확인용)
+  for (const sku of byType.unknown) columns[0].skus.push(sku);
+
+  return columns.map(c => c.skus);
+}
+
+function countTier(items) {
+  return items.reduce((s, sku) => {
+    const info = SKU_DB[sku];
+    if (info && ['body','open','drawer','flap'].includes(info.type)) return s + (info.tier || 0);
+    return s;
+  }, 0);
+}
+function hasAnyDoor(skus) {
+  return skus.some(s => SKU_DB[s] && ['door','glass','mirror'].includes(SKU_DB[s].type));
+}
+function countBodies(skus) {
+  return skus.filter(s => SKU_DB[s] && SKU_DB[s].type === 'body').length;
+}
+function countRods(skus) {
+  return skus.filter(s => SKU_DB[s] && SKU_DB[s].type === 'rod').length;
+}
+function hasUnshelvedBody4(skus) {
+  const bodies4 = skus.filter(s => SKU_DB[s] && SKU_DB[s].type === 'body' && SKU_DB[s].tier === 4).length;
+  const shelves = skus.filter(s => SKU_DB[s] && SKU_DB[s].type === 'shelf').length;
+  return bodies4 > shelves;
+}
+
+let partIdCounter = 0;
+let stagingParts = [];
+
+function buildColumn(skus, idx) {
+  const items = { body: [], door: [], glass: [], mirror: [], drawer: [], flap: [], open: [], base: [], rod: [], shelf: [], accessory: [], unknown: [] };
+  for (const sku of skus) {
+    const info = SKU_DB[sku];
+    if (!info) { items.unknown.push(sku); continue; }
+    items[info.type].push({ sku, id: `p${++partIdCounter}`, ...info });
+  }
+  const base = items.base[0];
+  const colWidth = (base && base.width) || (items.body[0] && items.body[0].width) || (items.door[0] && items.door[0].width) || (items.glass[0] && items.glass[0].width) || (items.mirror[0] && items.mirror[0].width) || 600;
+  const tierSum = items.body.reduce((s,x)=>s+x.tier,0) + items.open.reduce((s,x)=>s+x.tier,0) + items.drawer.reduce((s,x)=>s+x.tier,0) + items.flap.reduce((s,x)=>s+x.tier,0);
+  const allDoors = [...items.door, ...items.glass, ...items.mirror];
+  const doorTier = allDoors.reduce((s,x)=>s+x.tier,0);
+  const drawerFlapTier = items.drawer.reduce((s,x)=>s+x.tier,0) + items.flap.reduce((s,x)=>s+x.tier,0);
+
+  // 오픈형(도어 X) 자동 감지: 도어 + 서랍/플랩 < 5단이면 차이만큼 오픈장/몸통을 노출 처리
+  // 우선순위: 오픈장 먼저 → 부족하면 몸통도 노출
+  const coverGap = 5 - doorTier - drawerFlapTier;
+  const exposedIds = [];
+  if (coverGap > 0) {
+    let remain = coverGap;
+    for (const o of items.open) {
+      if (remain <= 0) break;
+      if (o.tier <= remain) { exposedIds.push(o.id); remain -= o.tier; }
+    }
+    // 오픈장으로 못 채운 경우, 몸통도 자동 노출 (작은 단수부터)
+    if (remain > 0) {
+      const sortedBodies = [...items.body].sort((a,b)=>a.tier-b.tier);
+      for (const b of sortedBodies) {
+        if (remain <= 0) break;
+        if (b.tier <= remain) { exposedIds.push(b.id); remain -= b.tier; }
+      }
+    }
+  }
+  const exposedExtraTier = exposedIds.reduce((s, pid) => {
+    for (const t of ['open','body']) {
+      const p = items[t].find(x => x.id === pid);
+      if (p) return s + p.tier;
+    }
+    return s;
+  }, 0);
+  const exposedTier = drawerFlapTier + exposedExtraTier;
+
+  // 부품 표시 순서 초기화 (위→아래): 플랩 → 몸통 큰단수 → 오픈장 → 몸통 작은단수 → 서랍 → (도어는 마지막)
+  const order = [];
+  for (const f of items.flap) order.push(f.id);
+  const bodies = [...items.body].sort((a,b)=>b.tier-a.tier);
+  if (bodies.length > 0) {
+    order.push(bodies[0].id);
+    for (const o of items.open) order.push(o.id);
+    for (let i = 1; i < bodies.length; i++) order.push(bodies[i].id);
+  } else {
+    for (const o of items.open) order.push(o.id);
+  }
+  for (const d of items.drawer) order.push(d.id);
+  for (const d of items.door) order.push(d.id);
+  for (const d of items.glass) order.push(d.id);
+  for (const d of items.mirror) order.push(d.id);
+
+  return { idx, width: colWidth, items, tierSum, doorTier, exposedTier, base, exposedIds, skus: [...skus], order };
+}
+
+function arrangeInternals(col) {
+  // col.order에서 도어 제외한 부품을 순서대로 반환
+  if (col.order && col.order.length > 0) {
+    const result = [];
+    for (const id of col.order) {
+      for (const t of ['flap','open','body','drawer']) {
+        const p = col.items[t].find(x => x.id === id);
+        if (p) {
+          let label = '';
+          if (t === 'body') label = `몸통 ${p.tier}단`;
+          else if (t === 'open') label = '오픈장';
+          else if (t === 'drawer') label = '서랍장';
+          else if (t === 'flap') label = '플랩장';
+          result.push({ kind: t, sku: p.sku, tier: p.tier, label, id: p.id });
+          break;
+        }
+      }
+    }
+    return result;
+  }
+  // 폴백: 기본 순서
+  const parts = [];
+  for (const f of col.items.flap)  parts.push({ kind: 'flap',   tier: f.tier, label: '플랩장' });
+  for (const o of col.items.open)  parts.push({ kind: 'open',   tier: o.tier, label: '오픈장' });
+  const bodies = [...col.items.body].sort((a,b)=>b.tier-a.tier);
+  for (const b of bodies) parts.push({ kind: 'body', tier: b.tier, label: `몸통 ${b.tier}단` });
+  for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
+  return parts;
+}
+
+function renderDiagram(columns) {
+  if (!columns.length) return '';
+  const SCALE = 0.25, TIER_H = 90, COL_GAP = 4, BASE_H = 22, TITLE_H = 30;
+  const drawingWidth = columns.reduce((s,c)=>s + c.width*SCALE, 0) + COL_GAP * (columns.length-1);
+  const drawingHeight = TIER_H*5 + BASE_H;
+  const totalSectionWidth = drawingWidth + 40;
+  const SVG_W = Math.max(900, totalSectionWidth*2 + 80);
+  const SVG_H = TITLE_H + 30 + drawingHeight + 80;
+  const startExternal = (SVG_W/2 - totalSectionWidth)/2 + 20;
+  const startInternal = SVG_W/2 + (SVG_W/2 - totalSectionWidth)/2 + 20;
+
+  let svg = `<svg id="diagram-svg" viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg" style="display:block; max-width:100%; height:auto;">
+    <defs>
+      <pattern id="glassP" patternUnits="userSpaceOnUse" width="4" height="${TIER_H*5}">
+        <rect width="4" height="${TIER_H*5}" fill="#2A2A2A"/>
+        <line x1="2" y1="0" x2="2" y2="${TIER_H*5}" stroke="#555" stroke-width="0.5"/>
+      </pattern>
+      <linearGradient id="mirrorP" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#444"/><stop offset="0.5" stop-color="#777"/><stop offset="1" stop-color="#333"/>
+      </linearGradient>
+    </defs>
+    <style>
+      .lbl { font-family: -apple-system, system-ui, sans-serif; }
+      .h2 { font-size: 13px; font-weight: 600; fill: #333; }
+      .b1 { font-size: 11px; fill: #333; font-weight: 600; }
+      .b2 { font-size: 10px; fill: #fff; font-weight: 500; }
+      .t  { font-size: 10px; fill: #888; }
+    </style>`;
+
+  svg += renderSection(columns, startExternal, TITLE_H + 30, SCALE, TIER_H, COL_GAP, BASE_H, 'external');
+  svg += renderSection(columns, startInternal, TITLE_H + 30, SCALE, TIER_H, COL_GAP, BASE_H, 'internal');
+  svg += `<text x="${startExternal + drawingWidth/2}" y="${TITLE_H}" text-anchor="middle" class="lbl h2">외부 (도어 닫힘)</text>`;
+  svg += `<text x="${startInternal + drawingWidth/2}" y="${TITLE_H}" text-anchor="middle" class="lbl h2">내부 (몸통 구성)</text>`;
+  svg += renderLegend(SVG_W/2, TITLE_H + 30 + drawingHeight + 36);
+  svg += '</svg>';
+  return svg;
+}
+
+function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
+  let out = '', x = sx;
+  for (const col of columns) {
+    const w = col.width * scale;
+    out += mode === 'external' ? renderExternalColumn(col, x, sy, w, tierH) : renderInternalColumn(col, x, sy, w, tierH);
+
+    // 좌대 (일반형 vs 서랍형 구분)
+    const baseVariant = col.base && col.base.variant === 'drawer' ? 'drawer' : 'normal';
+    const baseY = sy + tierH*5;
+    if (baseVariant === 'drawer') {
+      // 좌대 서랍형 — 좌대 안에 서랍 표시 (가로 분할선 + 손잡이)
+      out += `<rect x="${x}" y="${baseY}" width="${w}" height="${baseH}" fill="#3A2F1F" stroke="#1A1A1A" stroke-width="0.8"/>`;
+      out += `<line x1="${x + w*0.3}" y1="${baseY + baseH*0.55}" x2="${x + w*0.7}" y2="${baseY + baseH*0.55}" stroke="#FFD18A" stroke-width="1"/>`;
+      out += `<text x="${x + w/2}" y="${baseY + baseH/2 + 3}" text-anchor="middle" class="lbl t" fill="#FFD18A" font-weight="700">서랍형 좌대 ${col.width}</text>`;
+    } else {
+      out += `<rect x="${x}" y="${baseY}" width="${w}" height="${baseH}" fill="#2C2C2C"/>`;
+      out += `<text x="${x + w/2}" y="${baseY + baseH/2 + 4}" text-anchor="middle" class="lbl t" fill="#fff">좌대 ${col.width}</text>`;
+    }
+    out += `<text x="${x + w/2}" y="${baseY + baseH + 16}" text-anchor="middle" class="lbl t">${col.width}mm</text>`;
+    x += w + gap;
+  }
+  return out;
+}
+
+function renderExternalColumn(col, x, y, w, tierH) {
+  let out = '', curY = y;
+  const exposedIds = col.exposedIds || [];
+  const allDoors = [...col.items.door, ...col.items.glass, ...col.items.mirror]
+    .sort((a, b) => b.tier - a.tier);
+
+  // 내부 순서를 기반으로 세그먼트 분리: 노출 부품(플랩/서랍/노출 오픈장/노출 몸통) 사이를 도어가 채움
+  const parts = arrangeInternals(col);
+  const segments = [];
+  let coveredTier = 0;
+  for (const p of parts) {
+    const isExposed = p.kind === 'flap' || p.kind === 'drawer' ||
+      ((p.kind === 'open' || p.kind === 'body') && exposedIds.includes(p.id));
+    if (isExposed) {
+      if (coveredTier > 0) { segments.push({ type: 'door', tier: coveredTier }); coveredTier = 0; }
+      segments.push({ type: 'exposed', part: p });
+    } else {
+      coveredTier += p.tier;
+    }
+  }
+  if (coveredTier > 0) segments.push({ type: 'door', tier: coveredTier });
+
+  // 도어 풀에서 각 도어 세그먼트에 매칭 (정확 매칭 우선 → 그리디)
+  const doorPool = [...allDoors];
+  for (const seg of segments) {
+    if (seg.type !== 'door') continue;
+    seg.doors = [];
+    let need = seg.tier;
+    let i = doorPool.findIndex(d => d.tier === need);
+    if (i >= 0) { seg.doors.push(doorPool.splice(i, 1)[0]); need = 0; }
+    while (need > 0) {
+      i = doorPool.findIndex(d => d.tier <= need);
+      if (i < 0) break;
+      seg.doors.push(doorPool.splice(i, 1)[0]);
+      need -= seg.doors[seg.doors.length-1].tier;
+    }
+  }
+
+  // 렌더링
+  for (const seg of segments) {
+    if (seg.type === 'exposed') {
+      const p = seg.part;
+      const h = p.tier * tierH;
+      if (p.kind === 'flap') out += drawerOrFlap(x, curY, w, h, '플랩장', 'top');
+      else if (p.kind === 'drawer') out += drawerOrFlap(x, curY, w, h, '서랍장', 'bottom');
+      else if (p.kind === 'open') out += renderExposedOpen(x, curY, w, h);
+      else if (p.kind === 'body') out += renderExposedBody(x, curY, w, h, p.tier);
+      curY += h;
+    } else {
+      const used = (seg.doors || []).reduce((s,d)=>s+d.tier,0);
+      if (seg.doors && seg.doors.length > 0) {
+        out += renderDoors(seg.doors, x, curY, w, tierH);
+        curY += used * tierH;
+      }
+      // 도어 부족분 표시
+      if (used < seg.tier) {
+        const shortH = (seg.tier - used) * tierH;
+        out += `<rect x="${x}" y="${curY}" width="${w}" height="${shortH}" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+        out += `<text x="${x + w/2}" y="${curY + shortH/2}" text-anchor="middle" class="lbl b1" fill="#b91c1c">도어 ${seg.tier - used}단 부족</text>`;
+        curY += shortH;
+      }
+    }
+  }
+  return out;
+}
+
+function renderExposedOpen(x, y, w, h) {
+  let out = `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#1A1A1A" stroke="#000" stroke-width="1.4"/>`;
+  out += `<text x="${x + w/2}" y="${y + h/2 - 4}" text-anchor="middle" class="lbl" style="fill:#fff;font-size:13px;font-weight:700;">오픈장</text>`;
+  out += `<text x="${x + w/2}" y="${y + h/2 + 14}" text-anchor="middle" class="lbl" style="fill:#FFD18A;font-size:10px;font-weight:700;">도어 X · 오픈형</text>`;
+  return out;
+}
+
+function renderExposedBody(x, y, w, h, tier) {
+  let out = `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#1A1A1A" stroke="#000" stroke-width="1.4"/>`;
+  // 단별 가로 분할선 (선반 라인 느낌)
+  for (let i = 1; i < tier; i++) {
+    const ly = y + (h / tier) * i;
+    out += `<line x1="${x + 4}" y1="${ly}" x2="${x + w - 4}" y2="${ly}" stroke="#555" stroke-width="1" stroke-dasharray="3 2"/>`;
+  }
+  out += `<text x="${x + w/2}" y="${y + h/2 - 4}" text-anchor="middle" class="lbl" style="fill:#fff;font-size:13px;font-weight:700;">몸통 ${tier}단</text>`;
+  out += `<text x="${x + w/2}" y="${y + h/2 + 14}" text-anchor="middle" class="lbl" style="fill:#FFD18A;font-size:10px;font-weight:700;">도어 X · 오픈형</text>`;
+  return out;
+}
+
+function renderDoors(doors, x, y, w, tierH) {
+  let out = '', curY = y;
+  for (let i = 0; i < doors.length; i++) {
+    const d = doors[i];
+    const h = d.tier * tierH;
+    let fill = '#F2EADB', textColor = '#1a1a1a', subColor = '#555', labelType = '도어';
+    if (d.type === 'glass') { fill = 'url(#glassP)'; textColor = '#fff'; subColor = '#e0e0e0'; labelType = '유리도어'; }
+    if (d.type === 'mirror') { fill = 'url(#mirrorP)'; textColor = '#fff'; subColor = '#f0f0f0'; labelType = '거울도어'; }
+    out += `<rect x="${x}" y="${curY}" width="${w}" height="${h}" fill="${fill}" stroke="#2C2C2C" stroke-width="1.2"/>`;
+    if (d.type === 'glass') out += `<rect x="${x}" y="${curY}" width="${w}" height="${h}" fill="#3a3a3a" opacity="0.3"/>`;
+
+    // 손잡이 — 핸들형은 막대형 가시 손잡이, 일반은 작은 점
+    const isHandle = d.variant === 'handle';
+    const handleSide = (i % 2 === 0) ? 'right' : 'left';
+    if (isHandle) {
+      // 세로 막대형 핸들 (실제 핸들처럼 가시적)
+      const hx = handleSide === 'right' ? x + w - 11 : x + 7;
+      const hh = Math.min(h * 0.18, 30);
+      const hy = curY + h * 0.45;
+      out += `<rect x="${hx}" y="${hy}" width="4" height="${hh}" fill="#2C2C2C" rx="1.5"/>`;
+      // 핸들형 라벨 배지
+      out += `<text x="${x + w/2}" y="${curY + 14}" text-anchor="middle" class="lbl t" fill="#b45309" font-weight="700">핸들형</text>`;
+    } else {
+      const hx = handleSide === 'right' ? x + w - 8 : x + 8;
+      out += `<circle cx="${hx}" cy="${curY + h/2}" r="2.5" fill="${d.type === 'door' ? '#2C2C2C' : '#888'}"/>`;
+    }
+    out += `<text x="${x + w/2}" y="${curY + h/2}" text-anchor="middle" class="lbl" fill="${textColor}" font-size="12" font-weight="700">${labelType} ${d.tier}단</text>`;
+    out += `<text x="${x + w/2}" y="${curY + h/2 + 16}" text-anchor="middle" class="lbl" fill="${subColor}" font-size="11" font-weight="600">${d.width}mm</text>`;
+    curY += h;
+  }
+  return out;
+}
+
+function drawerOrFlap(x, y, w, h, label, pos) {
+  let out = `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#F2EADB" stroke="#2C2C2C" stroke-width="1.2"/>`;
+  const lineY = pos === 'bottom' ? y + h * 0.35 : y + h * 0.65;
+  out += `<line x1="${x + w*0.3}" y1="${lineY}" x2="${x + w*0.7}" y2="${lineY}" stroke="#2C2C2C" stroke-width="1"/>`;
+  out += `<text x="${x + w/2}" y="${y + h/2 + 4}" text-anchor="middle" class="lbl b1">${label}</text>`;
+  out += `<text x="${x + w/2}" y="${y + h/2 + 18}" text-anchor="middle" class="lbl t" fill="#FFB74D">완조립</text>`;
+  return out;
+}
+
+function renderInternalColumn(col, x, y, w, tierH) {
+  let out = '', curY = y;
+  let rodCount = col.items.rod.length;
+  let shelfCount = col.items.shelf.length;
+  const exposedIds = col.exposedIds || [];
+  const parts = arrangeInternals(col);
+  for (const p of parts) {
+    const h = p.tier * tierH;
+    let fill = '#3A3A3A';
+    const isExposedOpen = p.kind === 'open' && exposedIds.includes(p.id);
+    const isExposedBody = p.kind === 'body' && exposedIds.includes(p.id);
+    if (p.kind === 'open') fill = isExposedOpen ? '#1A1A1A' : '#4A4A4A';
+    if (p.kind === 'body' && isExposedBody) fill = '#1A1A1A';
+    if (p.kind === 'drawer' || p.kind === 'flap') fill = '#5A4F3F';
+    out += `<rect x="${x}" y="${curY}" width="${w}" height="${h}" fill="${fill}" stroke="#1A1A1A" stroke-width="1"/>`;
+    if (p.kind === 'body' && rodCount > 0) {
+      out += `<line x1="${x + 6}" y1="${curY + 18}" x2="${x + w - 6}" y2="${curY + 18}" stroke="#D8D8D8" stroke-width="2.5" stroke-linecap="round"/>`;
+      rodCount--;
+    }
+    if (p.kind === 'body' && p.tier === 4 && shelfCount > 0) {
+      out += `<line x1="${x + 6}" y1="${curY + h - 30}" x2="${x + w - 6}" y2="${curY + h - 30}" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="4 3"/>`;
+      out += `<text x="${x + w/2}" y="${curY + h - 18}" text-anchor="middle" class="lbl t" fill="#E0E0E0" font-weight="600">이동선반</text>`;
+      shelfCount--;
+    }
+    out += `<text x="${x + w/2}" y="${curY + h/2}" text-anchor="middle" class="lbl" style="fill:#fff;font-size:13px;font-weight:700;">${p.label}</text>`;
+    out += `<text x="${x + w/2}" y="${curY + h/2 + 18}" text-anchor="middle" class="lbl" style="fill:#fff;font-size:11px;font-weight:500;opacity:0.85;">${col.width}mm</text>`;
+    if (['open','drawer','flap'].includes(p.kind)) {
+      out += `<text x="${x + w/2}" y="${curY + h/2 + 34}" text-anchor="middle" class="lbl" style="fill:#FFD18A;font-size:10px;font-weight:700;">${isExposedOpen ? '오픈형 (도어 X)' : '완조립'}</text>`;
+    } else if (p.kind === 'body' && isExposedBody) {
+      out += `<text x="${x + w/2}" y="${curY + h/2 + 34}" text-anchor="middle" class="lbl" style="fill:#FFD18A;font-size:10px;font-weight:700;">오픈형 (도어 X)</text>`;
+    }
+    curY += h;
+  }
+  return out;
+}
+
+function renderLegend(cx, y) {
+  const items = [
+    { color: '#F2EADB', stroke: '#2C2C2C', label: '도어' },
+    { color: 'url(#glassP)', stroke: '#1A1A1A', label: '유리도어' },
+    { color: 'url(#mirrorP)', stroke: '#1A1A1A', label: '거울도어' },
+    { color: '#3A3A3A', label: '몸통' },
+    { color: '#4A4A4A', label: '오픈장' },
+    { color: '#5A4F3F', label: '서랍/플랩' },
+    { color: '#2C2C2C', label: '좌대 일반형' },
+    { color: '#3A2F1F', label: '좌대 서랍형' }
+  ];
+  const totalW = items.length * 100;
+  let x = cx - totalW/2, out = '';
+  for (const it of items) {
+    out += `<rect x="${x}" y="${y}" width="16" height="12" fill="${it.color}" stroke="${it.stroke || 'none'}" stroke-width="1"/>`;
+    out += `<text x="${x + 20}" y="${y + 10}" class="lbl t" fill="#444">${it.label}</text>`;
+    x += 100;
+  }
+  // 핸들형 별도 표시
+  out += `<text x="${cx}" y="${y + 28}" text-anchor="middle" class="lbl t" fill="#b45309" font-weight="700">"핸들형" 태그 = 가시 손잡이 도어</text>`;
+  return out;
+}
+
+function validateAll(columns, accessoryCount) {
+  const results = [];
+  let allTierOk = true;
+  columns.forEach((c, i) => {
+    if (c.tierSum !== 5) {
+      const shortfall = 5 - c.tierSum;
+      const widthInfo = `폭 ${c.width}mm`;
+      const reason = shortfall > 0
+        ? `${widthInfo} 부품(몸통/오픈장/서랍장/플랩장) ${shortfall}단 부족 → 주문 누락 가능성`
+        : `${widthInfo} 부품이 ${-shortfall}단 초과 → 다른 컬럼과 부품이 섞였을 가능성`;
+      results.push({ level: 'fail', msg: `컬럼 ${i+1}(폭 ${c.width}): 내부 단수 ${c.tierSum}단/5단 — ${reason}` });
+      allTierOk = false;
+    }
+  });
+  if (allTierOk) results.push({ level: 'pass', msg: `모든 컬럼이 5단으로 정확히 구성됨 (${columns.length}개 컬럼)` });
+
+  let allDoorOk = true;
+  columns.forEach((c, i) => {
+    const total = c.doorTier + c.exposedTier;
+    if (total !== 5) {
+      const reason = total < 5
+        ? `폭 ${c.width}mm 도어 ${5-total}단 부족 → 주문 누락 가능성`
+        : `폭 ${c.width}mm 도어 ${total-5}단 초과 → 컬럼 분배 오류 가능성`;
+      results.push({ level: 'fail', msg: `컬럼 ${i+1}(폭 ${c.width}): 외부 도어 ${c.doorTier}단 + 노출 ${c.exposedTier}단 = ${total}단/5단 — ${reason}` });
+      allDoorOk = false;
+    }
+  });
+  if (allDoorOk) results.push({ level: 'pass', msg: `모든 컬럼의 외부 도어/노출면이 5단으로 맞물림` });
+
+  let baseOk = true;
+  columns.forEach((c, i) => {
+    if (!c.base) { results.push({ level: 'fail', msg: `컬럼 ${i+1}: 좌대가 없음` }); baseOk = false; }
+  });
+  if (baseOk) results.push({ level: 'pass', msg: `모든 컬럼에 좌대 매칭 완료` });
+
+  if (accessoryCount === columns.length) {
+    results.push({ level: 'pass', msg: `부속품 모음 ${accessoryCount}개 = 컬럼 수 일치` });
+  } else {
+    results.push({ level: 'warn', msg: `부속품 모음 ${accessoryCount}개 ≠ 컬럼 수 ${columns.length}개 (확인 필요)` });
+  }
+
+  let totalRods = 0, expectedRods = 0;
+  columns.forEach(c => { totalRods += c.items.rod.length; expectedRods += c.items.body.length; });
+  if (totalRods === expectedRods) {
+    results.push({ level: 'pass', msg: `옷걸이봉 ${totalRods}개 = 몸통 개수 일치` });
+  } else {
+    results.push({ level: 'warn', msg: `옷걸이봉 ${totalRods}개 / 몸통 ${expectedRods}개 (수량 불일치)` });
+  }
+
+  return results;
+}
+
+let currentColumns = null;
+
+function generate() {
+  const text = document.getElementById('input').value;
+  if (!text.trim()) { alert('SKU 리스트를 먼저 붙여넣어주세요'); return; }
+  const blocks = parseInput(text);
+  if (blocks.length === 0) { alert('인식된 SKU가 없습니다.'); return; }
+  // 편집 상태 초기화
+  stagingParts = [];
+  partIdCounter = 0;
+  currentColumns = blocks.map((skus, i) => buildColumn(skus, i));
+  refreshAllUI();
+}
+
+function refreshAllUI() {
+  if (!currentColumns) return;
+  let accessoryCount = 0;
+  for (const c of currentColumns) accessoryCount += c.items.accessory.length;
+
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('stat-width').textContent = currentColumns.reduce((s,c)=>s+c.width,0).toLocaleString();
+  document.getElementById('stat-cols').textContent = currentColumns.length;
+
+  const checks = validateAll(currentColumns, accessoryCount);
+  document.getElementById('validation').innerHTML = checks.map(c => {
+    const icon = c.level === 'pass' ? '✓' : c.level === 'warn' ? '⚠' : '✗';
+    return `<div class="check ${c.level}"><span class="check-icon">${icon}</span><span>${c.msg}</span></div>`;
+  }).join('');
+  document.getElementById('diagram-area').innerHTML = renderDiagram(currentColumns);
+  renderPartsTable(currentColumns);
+  renderEditor(currentColumns);
+}
+
+// ====================== 드래그 편집기 ======================
+function renderEditor(columns) {
+  const editor = document.getElementById('columns-editor');
+  if (!editor) return;
+  let html = '';
+
+  // 임시 보관함
+  html += `<div class="staging-row" data-col="staging"
+                ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+    <div class="staging-header">🗂️ 임시 보관함 <span class="count">${stagingParts.length}</span> <span style="font-weight:400;color:#888;font-size:11px;">— 부품을 여기로 드래그해 임시로 빼둘 수 있습니다</span></div>
+    <div class="staging-parts">`;
+  if (stagingParts.length === 0) {
+    html += `<div class="staging-empty">비어 있음</div>`;
+  } else {
+    for (const part of stagingParts) html += renderPartCard(part, 'staging');
+  }
+  html += `</div></div>`;
+
+  // 컬럼 행
+  html += `<div class="cols-row">`;
+  columns.forEach((col, i) => {
+    const tier = col.tierSum != null ? col.tierSum : 0;
+    const tierClass = tier === 5 ? 'ok' : 'fail';
+    const leftDisabled = i === 0 ? 'disabled' : '';
+    const rightDisabled = i === columns.length - 1 ? 'disabled' : '';
+    html += `<div class="col-edit w${col.width}">
+      <div class="col-edit-header">
+        <div class="col-move-row">
+          <button class="col-move-btn" ${leftDisabled} onclick="moveColumn(${i}, -1)" title="왼쪽으로 이동">←</button>
+          <span class="col-name">컬럼 ${i+1} · ${col.width}mm</span>
+          <button class="col-move-btn" ${rightDisabled} onclick="moveColumn(${i}, 1)" title="오른쪽으로 이동">→</button>
+        </div>
+        <span class="col-edit-tier ${tierClass}">내부 ${tier}/5단</span>
+      </div>
+      <div class="parts-drop-zone" data-col="${i}" data-width="${col.width}"
+           ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">`;
+    const parts = getOrderedColumnParts(col);
+    if (parts.length === 0) {
+      html += `<div class="empty-zone">드롭하여 부품 추가</div>`;
+    } else {
+      for (const part of parts) html += renderPartCard(part, i);
+    }
+    html += `</div></div>`;
+  });
+  html += `</div>`;
+
+  editor.innerHTML = html;
+}
+
+function renderPartCard(part, location) {
+  const t = part.type;
+  const isExposed = (t === 'open' || t === 'body') && location !== 'staging' &&
+    (currentColumns[location].exposedIds || []).includes(part.id);
+  const cardClass = t + (isExposed ? ' exposed' : '');
+  let label = '';
+  if (t === 'body') label = `몸통 ${part.tier}단`;
+  else if (t === 'open') label = '오픈장';
+  else if (t === 'drawer') label = '서랍장';
+  else if (t === 'flap') label = '플랩장';
+  else if (t === 'door') label = `도어 ${part.tier}단`;
+  else if (t === 'glass') label = `유리도어 ${part.tier}단`;
+  else if (t === 'mirror') label = `거울도어 ${part.tier}단`;
+  else label = part.sku;
+
+  let actions = '';
+  if (location !== 'staging') {
+    if (t === 'open' || t === 'body') {
+      actions += `<button class="toggle-btn ${isExposed ? 'exposed' : ''}" onclick="event.stopPropagation(); togglePartExposed(${location}, '${part.id}')" title="도어형/오픈형 전환">${isExposed ? '오픈형' : '도어형'}</button>`;
+    }
+    actions += `<button class="move-btn" onclick="event.stopPropagation(); movePartInColumn(${location}, '${part.id}', -1)" title="위로">↑</button>`;
+    actions += `<button class="move-btn" onclick="event.stopPropagation(); movePartInColumn(${location}, '${part.id}', 1)" title="아래로">↓</button>`;
+  }
+
+  return `<div class="part-card ${cardClass}" draggable="true" data-id="${part.id}" data-from="${location}"
+               ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)"
+               ondragover="handleCardDragOver(event)" ondragleave="handleCardDragLeave(event)" ondrop="handleCardDrop(event)">
+    <span class="part-label">${label}<span class="part-w">·${part.width}</span></span>
+    <div class="card-actions">${actions}</div>
+  </div>`;
+}
+
+function getOrderedColumnParts(col) {
+  if (!col.order || col.order.length === 0) return [];
+  const result = [];
+  for (const id of col.order) {
+    for (const t of ['flap','door','glass','mirror','body','open','drawer']) {
+      const p = col.items[t].find(x => x.id === id);
+      if (p) { result.push({ ...p, type: t }); break; }
+    }
+  }
+  return result;
+}
+
+// 카드 위로 드래그 — 위/아래 끼워넣기 위치 결정
+function handleCardDragOver(e) {
+  if (!dragData) return;
+  const card = e.currentTarget;
+  if (card.dataset.id === dragData.partId) return; // 자기 자신엔 못 놓음
+  e.preventDefault();
+  e.stopPropagation();
+
+  const cardLoc = card.dataset.from === 'staging' ? 'staging' : parseInt(card.dataset.from, 10);
+  // 폭 호환 검사
+  let invalid = false;
+  if (cardLoc !== 'staging') {
+    const part = findPartByIdAndLocation(dragData.partId, dragData.sourceLocation);
+    if (part && part.width && currentColumns[cardLoc].width !== part.width) invalid = true;
+  }
+  card.classList.remove('drop-above', 'drop-below', 'drop-invalid');
+  if (invalid) {
+    card.classList.add('drop-invalid');
+    e.dataTransfer.dropEffect = 'none';
+    return;
+  }
+  const rect = card.getBoundingClientRect();
+  const insertAbove = e.clientY < rect.top + rect.height / 2;
+  card.classList.add(insertAbove ? 'drop-above' : 'drop-below');
+  e.dataTransfer.dropEffect = 'move';
+}
+function handleCardDragLeave(e) {
+  e.currentTarget.classList.remove('drop-above', 'drop-below', 'drop-invalid');
+}
+function handleCardDrop(e) {
+  const card = e.currentTarget;
+  if (!dragData || card.dataset.id === dragData.partId) {
+    card.classList.remove('drop-above', 'drop-below', 'drop-invalid');
+    dragData = null;
+    return;
+  }
+  e.preventDefault();
+  e.stopPropagation();
+  const cardLoc = card.dataset.from === 'staging' ? 'staging' : parseInt(card.dataset.from, 10);
+  // 폭 검사
+  if (cardLoc !== 'staging') {
+    const partInfo = findPartByIdAndLocation(dragData.partId, dragData.sourceLocation);
+    if (partInfo && partInfo.width && currentColumns[cardLoc].width !== partInfo.width) {
+      alert(`⚠ 폭이 다른 컬럼으로는 이동할 수 없습니다\n· 부품 폭: ${partInfo.width}mm\n· 대상 컬럼 폭: ${currentColumns[cardLoc].width}mm`);
+      card.classList.remove('drop-above', 'drop-below', 'drop-invalid');
+      dragData = null;
+      return;
+    }
+  }
+  const rect = card.getBoundingClientRect();
+  const insertAbove = e.clientY < rect.top + rect.height / 2;
+  card.classList.remove('drop-above', 'drop-below', 'drop-invalid');
+  movePartToCardPosition(dragData.partId, dragData.sourceLocation, cardLoc, card.dataset.id, insertAbove);
+  dragData = null;
+}
+
+// 특정 카드 위/아래에 끼워넣기
+function movePartToCardPosition(partId, fromLoc, toLoc, refPartId, insertAbove) {
+  // 1) 소스에서 제거
+  let part = null;
+  if (fromLoc === 'staging') {
+    const i = stagingParts.findIndex(p => p.id === partId);
+    if (i >= 0) part = stagingParts.splice(i, 1)[0];
+  } else {
+    const col = currentColumns[fromLoc];
+    for (const t of ['flap','door','glass','mirror','body','open','drawer']) {
+      const i = col.items[t].findIndex(p => p.id === partId);
+      if (i >= 0) {
+        part = col.items[t].splice(i, 1)[0];
+        const oi = col.order.indexOf(partId);
+        if (oi >= 0) col.order.splice(oi, 1);
+        if ((t === 'open' || t === 'body') && col.exposedIds) {
+          const ei = col.exposedIds.indexOf(part.id);
+          if (ei >= 0) col.exposedIds.splice(ei, 1);
+        }
+        recomputeColumn(col);
+        break;
+      }
+    }
+  }
+  if (!part) return;
+
+  // 2) 타겟의 지정된 위치에 끼워넣기
+  if (toLoc === 'staging') {
+    const refIdx = stagingParts.findIndex(p => p.id === refPartId);
+    if (refIdx >= 0) {
+      stagingParts.splice(insertAbove ? refIdx : refIdx + 1, 0, part);
+    } else {
+      stagingParts.push(part);
+    }
+  } else {
+    const col = currentColumns[toLoc];
+    col.items[part.type].push(part);
+    if (!col.order) col.order = [];
+    const refIdx = col.order.indexOf(refPartId);
+    if (refIdx >= 0) {
+      col.order.splice(insertAbove ? refIdx : refIdx + 1, 0, part.id);
+    } else {
+      col.order.push(part.id);
+    }
+    recomputeColumn(col);
+  }
+  refreshAllUI();
+}
+
+// 컬럼 자체의 위치 이동 (폭 제약 없음 - 400/600 자유롭게 재배치 가능)
+function moveColumn(idx, direction) {
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= currentColumns.length) return;
+  [currentColumns[idx], currentColumns[newIdx]] = [currentColumns[newIdx], currentColumns[idx]];
+  // idx 값도 재할당 (참조용)
+  currentColumns.forEach((c, i) => c.idx = i);
+  refreshAllUI();
+}
+
+let dragData = null;
+function handleDragStart(e) {
+  const card = e.target.closest('.part-card');
+  if (!card) return;
+  dragData = {
+    partId: card.dataset.id,
+    sourceLocation: card.dataset.from === 'staging' ? 'staging' : parseInt(card.dataset.from, 10)
+  };
+  card.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function handleDragEnd(e) {
+  document.querySelectorAll('.part-card.dragging').forEach(c => c.classList.remove('dragging'));
+  document.querySelectorAll('.drag-over, .drag-over-invalid').forEach(z => z.classList.remove('drag-over','drag-over-invalid'));
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  const target = e.currentTarget;
+  const targetLocation = target.dataset.col === 'staging' ? 'staging' : parseInt(target.dataset.col, 10);
+  // 호환성 검사 (폭 매칭)
+  let invalid = false;
+  if (dragData && targetLocation !== 'staging') {
+    const part = findPartByIdAndLocation(dragData.partId, dragData.sourceLocation);
+    if (part && part.width && currentColumns[targetLocation].width !== part.width) invalid = true;
+  }
+  if (invalid) {
+    target.classList.add('drag-over-invalid');
+    target.classList.remove('drag-over');
+    e.dataTransfer.dropEffect = 'none';
+  } else {
+    target.classList.add('drag-over');
+    target.classList.remove('drag-over-invalid');
+    e.dataTransfer.dropEffect = 'move';
+  }
+}
+function handleDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over', 'drag-over-invalid');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over', 'drag-over-invalid');
+  if (!dragData) return;
+  const target = e.currentTarget;
+  const targetLocation = target.dataset.col === 'staging' ? 'staging' : parseInt(target.dataset.col, 10);
+  if (targetLocation === dragData.sourceLocation) { dragData = null; return; }
+  movePartLocation(dragData.partId, dragData.sourceLocation, targetLocation);
+  dragData = null;
+}
+
+function findPartByIdAndLocation(partId, location) {
+  if (location === 'staging') return stagingParts.find(p => p.id === partId);
+  if (location == null) return null;
+  const col = currentColumns[location];
+  if (!col) return null;
+  for (const t of ['flap','door','glass','mirror','body','open','drawer']) {
+    const p = col.items[t].find(x => x.id === partId);
+    if (p) return p;
+  }
+  return null;
+}
+
+function movePartLocation(partId, fromLoc, toLoc) {
+  // 1) 부품 정보 먼저 조회 (제거 전)
+  const partInfo = findPartByIdAndLocation(partId, fromLoc);
+  if (!partInfo) return;
+
+  // 2) 폭 호환성 검사 (컬럼으로 이동하는 경우만)
+  if (toLoc !== 'staging' && partInfo.width && currentColumns[toLoc].width !== partInfo.width) {
+    alert(`⚠ 폭이 다른 컬럼으로는 이동할 수 없습니다\n· 부품 폭: ${partInfo.width}mm\n· 대상 컬럼 폭: ${currentColumns[toLoc].width}mm\n\n임시 보관함을 이용하거나 같은 폭의 컬럼에만 이동 가능합니다.`);
+    return;
+  }
+
+  // 3) 소스에서 제거
+  let part = null;
+  if (fromLoc === 'staging') {
+    const i = stagingParts.findIndex(p => p.id === partId);
+    if (i >= 0) part = stagingParts.splice(i, 1)[0];
+  } else {
+    const col = currentColumns[fromLoc];
+    for (const t of ['flap','door','glass','mirror','body','open','drawer']) {
+      const i = col.items[t].findIndex(p => p.id === partId);
+      if (i >= 0) {
+        part = col.items[t].splice(i, 1)[0];
+        const oi = col.order.indexOf(partId);
+        if (oi >= 0) col.order.splice(oi, 1);
+        if ((t === 'open' || t === 'body') && col.exposedIds) {
+          const ei = col.exposedIds.indexOf(part.id);
+          if (ei >= 0) col.exposedIds.splice(ei, 1);
+        }
+        recomputeColumn(col);
+        break;
+      }
+    }
+  }
+  if (!part) return;
+
+  // 4) 타겟에 추가
+  if (toLoc === 'staging') {
+    stagingParts.push(part);
+  } else {
+    const col = currentColumns[toLoc];
+    col.items[part.type].push(part);
+    if (!col.order) col.order = [];
+    col.order.push(part.id);
+    recomputeColumn(col);
+  }
+  refreshAllUI();
+}
+
+function togglePartExposed(colIdx, partId) {
+  const col = currentColumns[colIdx];
+  if (!col.exposedIds) col.exposedIds = [];
+  const i = col.exposedIds.indexOf(partId);
+  if (i >= 0) col.exposedIds.splice(i, 1);
+  else col.exposedIds.push(partId);
+  recomputeColumn(col);
+  refreshAllUI();
+}
+
+function recomputeColumn(col) {
+  const drawerFlapTier = col.items.drawer.reduce((s,x)=>s+x.tier,0) + col.items.flap.reduce((s,x)=>s+x.tier,0);
+  const allDoors = [...col.items.door, ...col.items.glass, ...col.items.mirror];
+  col.doorTier = allDoors.reduce((s,x)=>s+x.tier,0);
+  const exposedExtraTier = (col.exposedIds || []).reduce((s, pid) => {
+    for (const t of ['open','body']) {
+      const p = col.items[t].find(x => x.id === pid);
+      if (p) return s + p.tier;
+    }
+    return s;
+  }, 0);
+  col.exposedTier = drawerFlapTier + exposedExtraTier;
+  col.tierSum = col.items.body.reduce((s,x)=>s+x.tier,0) + col.items.open.reduce((s,x)=>s+x.tier,0) + col.items.drawer.reduce((s,x)=>s+x.tier,0) + col.items.flap.reduce((s,x)=>s+x.tier,0);
+  // 좌대 폭 유지, base 객체 갱신
+  col.base = col.items.base[0];
+  col.width = col.base ? col.base.width : col.width;
+  // skus 재구성 (다운로드 합계 정확성용)
+  col.skus = [];
+  for (const t of ['base','flap','door','glass','mirror','body','open','drawer','rod','shelf','accessory']) {
+    for (const p of (col.items[t]||[])) col.skus.push(p.sku);
+  }
+}
+
+function renderPartsTable(columns) {
+  const counts = {}, unknowns = [];
+  for (const c of columns) {
+    for (const type of Object.keys(c.items)) {
+      if (type === 'unknown') { for (const sku of c.items.unknown) if (!unknowns.includes(sku)) unknowns.push(sku); continue; }
+      for (const item of c.items[type]) counts[item.sku] = (counts[item.sku] || 0) + 1;
+    }
+  }
+  let html = '';
+  const sorted = Object.entries(counts).sort((a,b) => a[0].localeCompare(b[0]));
+  for (const [sku, qty] of sorted) {
+    const info = SKU_DB[sku];
+    const tag = info.color === 'white' ? '<span class="tag tag-white">웜화이트</span>' :
+                info.color === 'charcoal' ? '<span class="tag tag-black">차콜블랙</span>' : '';
+    const preTag = info.pre ? '<span class="tag tag-pre">완조립</span>' : '';
+    html += `<tr><td class="col-code">${sku}</td><td>${info.name}${tag}${preTag}</td><td class="col-qty">${qty}</td></tr>`;
+  }
+  for (const sku of unknowns) {
+    html += `<tr><td class="col-code">${sku}</td><td><span class="unknown-sku">⚠ 미등록 SKU</span></td><td class="col-qty">?</td></tr>`;
+  }
+  document.getElementById('parts-tbody').innerHTML = html;
+}
+
+function loadExample(n) { document.getElementById('input').value = EXAMPLES[n]; generate(); }
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('empty').style.display = 'block';
+}
+
+// ====================== 사진 업로드 ======================
+function handlePhotoFile(file) {
+  if (!file || !file.type.startsWith('image/')) {
+    alert('이미지 파일만 첨부할 수 있습니다');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const url = ev.target.result;
+    const img = document.getElementById('photo-compare-img');
+    img.src = url;
+    document.getElementById('photo-compare-pane').style.display = 'block';
+    document.getElementById('compare-container').classList.add('has-photo');
+    document.getElementById('photo-clear-btn').style.display = 'inline-flex';
+    document.getElementById('photo-filename').textContent = '✓ ' + file.name;
+    // 결과 영역이 안 보이면 자동으로 안내
+    if (document.getElementById('results').style.display === 'none') {
+      document.getElementById('photo-filename').textContent += ' (구성도 생성 후 비교 가능)';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto() {
+  document.getElementById('photo-compare-img').src = '';
+  document.getElementById('photo-compare-pane').style.display = 'none';
+  document.getElementById('compare-container').classList.remove('has-photo');
+  document.getElementById('photo-clear-btn').style.display = 'none';
+  document.getElementById('photo-filename').textContent = '';
+  document.getElementById('photo-input').value = '';
+}
+
+// 드래그앤드롭 + 클립보드 paste
+(function setupPhotoIO() {
+  const drop = document.getElementById('photo-drop');
+  if (!drop) return;
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation(); drop.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation(); drop.classList.remove('dragover');
+  }));
+  drop.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (files && files[0]) handlePhotoFile(files[0]);
+  });
+  document.addEventListener('paste', e => {
+    // 텍스트 입력 필드에 포커스가 있으면 사진 자동 첨부로 가로채지 않음
+    // (엑셀 복사 시 클립보드에 텍스트 + 이미지가 함께 있어 텍스트 붙여넣기가 막혔던 문제 해결)
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'TEXTAREA' || ae.tagName === 'INPUT' || ae.isContentEditable)) {
+      return;
+    }
+    const items = (e.clipboardData || {}).items || [];
+    for (const item of items) {
+      if (item.type && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) { handlePhotoFile(file); e.preventDefault(); break; }
+      }
+    }
+  });
+})();
+
+function downloadPNG() {
+  const svg = document.getElementById('diagram-svg');
+  if (!svg) return alert('먼저 구성도를 생성해주세요');
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    const scale = 2;
+    canvas.width = svg.viewBox.baseVal.width * scale;
+    canvas.height = svg.viewBox.baseVal.height * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    canvas.toBlob(function(blob) {
+      const link = document.createElement('a');
+      link.download = `페이브-옷장-구성도-${Date.now()}.png`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    }, 'image/png');
+  };
+  img.src = url;
+}
+</script>
+</body>
+</html>
