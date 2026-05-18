@@ -1806,7 +1806,12 @@ function buildColumn(skus, idx, meta = null) {
     items[info.type].push({ sku, id: `p${++partIdCounter}`, ...info });
   }
   const base = items.base[0];
-  const colWidth = (base && base.width) || (items.body[0] && items.body[0].width) || (items.door[0] && items.door[0].width) || (items.glass[0] && items.glass[0].width) || (items.mirror[0] && items.mirror[0].width) || 600;
+  // EP 단독 컬럼 감지: 엔드패널만 있고 다른 부품(좌대·몸통·도어 등)은 없는 경우
+  const isEpOnlyCol = items.ep.length > 0
+    && items.base.length === 0 && items.body.length === 0
+    && items.door.length === 0 && items.glass.length === 0 && items.mirror.length === 0
+    && items.open.length === 0 && items.drawer.length === 0 && items.flap.length === 0;
+  const colWidth = isEpOnlyCol ? 30 : ((base && base.width) || (items.body[0] && items.body[0].width) || (items.door[0] && items.door[0].width) || (items.glass[0] && items.glass[0].width) || (items.mirror[0] && items.mirror[0].width) || 600);
   const tierSum = items.body.reduce((s,x)=>s+x.tier,0) + items.open.reduce((s,x)=>s+x.tier,0) + items.drawer.reduce((s,x)=>s+x.tier,0) + items.flap.reduce((s,x)=>s+x.tier,0);
   const allDoors = [...items.door, ...items.glass, ...items.mirror];
   const doorTier = allDoors.reduce((s,x)=>s+x.tier,0);
@@ -1884,7 +1889,7 @@ function buildColumn(skus, idx, meta = null) {
   for (const d of items.glass) order.push(d.id);
   for (const d of items.mirror) order.push(d.id);
 
-  return { idx, width: colWidth, items, tierSum, doorTier, exposedTier, base, exposedIds, skus: [...skus], order, meta };
+  return { idx, width: colWidth, items, tierSum, doorTier, exposedTier, base, exposedIds, skus: [...skus], order, meta, isEpOnlyCol };
 }
 
 function arrangeInternals(col) {
@@ -1992,6 +1997,14 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
     const hingeSide = (ci === 0) ? 'left'
                     : (ci === columns.length - 1) ? 'right'
                     : ((ci % 2 === 1) ? 'right' : 'left');
+    // EP 단독 컬럼: 좌대·도어·몸통 없이 EP 패널만 + 좌대 영역 건너뜀
+    if (col.isEpOnlyCol) {
+      out += renderEPPanel(x, sy, w, tierH * 5, 'mid');
+      out += `<text x="${x + w/2}" y="${sy + tierH*5 + 16}" text-anchor="middle" class="lbl t">EP</text>`;
+      x += w + gap;
+      continue;
+    }
+
     out += mode === 'external' ? renderExternalColumn(col, x, sy, w, tierH, hingeSide) : renderInternalColumn(col, x, sy, w, tierH);
     // 외부 도면 — 컬럼 상단에 힌지 방향 라벨
     if (mode === 'external') {
@@ -1999,19 +2012,24 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
       out += `<text x="${x + w/2}" y="${sy - 6}" text-anchor="middle" class="lbl" style="fill:#999;font-size:9px;font-weight:600;">${hingeLabel}</text>`;
     }
 
-    // 좌대 (일반형 vs 서랍형, 완조립 vs 조립 구분)
-    const baseVariant = col.base && col.base.variant === 'drawer' ? 'drawer' : 'normal';
-    const assemblyLabel = col.base && col.base.assemblyLabel ? col.base.assemblyLabel : '';
-    const baseY = sy + tierH*5;
-    if (baseVariant === 'drawer') {
-      out += `<rect x="${x}" y="${baseY}" width="${w}" height="${baseH}" fill="#3A2F1F" stroke="#1A1A1A" stroke-width="0.8"/>`;
-      out += `<line x1="${x + w*0.3}" y1="${baseY + baseH*0.55}" x2="${x + w*0.7}" y2="${baseY + baseH*0.55}" stroke="#FFD18A" stroke-width="1"/>`;
-      out += `<text x="${x + w/2}" y="${baseY + baseH/2 + 3}" text-anchor="middle" class="lbl" style="fill:#FFD18A;font-size:10px;font-weight:700;">서랍형 좌대 ${col.width}${assemblyLabel?` (${assemblyLabel})`:''}</text>`;
+    // 좌대 (일반형 vs 서랍형, 완조립 vs 조립 구분) — 좌대 SKU 가 있을 때만 그림
+    if (col.base) {
+      const baseVariant = col.base.variant === 'drawer' ? 'drawer' : 'normal';
+      const assemblyLabel = col.base.assemblyLabel || '';
+      const baseY = sy + tierH*5;
+      if (baseVariant === 'drawer') {
+        out += `<rect x="${x}" y="${baseY}" width="${w}" height="${baseH}" fill="#3A2F1F" stroke="#1A1A1A" stroke-width="0.8"/>`;
+        out += `<line x1="${x + w*0.3}" y1="${baseY + baseH*0.55}" x2="${x + w*0.7}" y2="${baseY + baseH*0.55}" stroke="#FFD18A" stroke-width="1"/>`;
+        out += `<text x="${x + w/2}" y="${baseY + baseH/2 + 3}" text-anchor="middle" class="lbl" style="fill:#FFD18A;font-size:10px;font-weight:700;">서랍형 좌대 ${col.width}${assemblyLabel?` (${assemblyLabel})`:''}</text>`;
+      } else {
+        out += `<rect x="${x}" y="${baseY}" width="${w}" height="${baseH}" fill="#2C2C2C"/>`;
+        out += `<text x="${x + w/2}" y="${baseY + baseH/2 + 3}" text-anchor="middle" class="lbl" style="fill:#fff;font-size:10px;font-weight:600;">좌대 ${col.width}${assemblyLabel?` (${assemblyLabel})`:''}</text>`;
+      }
+      out += `<text x="${x + w/2}" y="${baseY + baseH + 16}" text-anchor="middle" class="lbl t">${col.width}mm</text>`;
     } else {
-      out += `<rect x="${x}" y="${baseY}" width="${w}" height="${baseH}" fill="#2C2C2C"/>`;
-      out += `<text x="${x + w/2}" y="${baseY + baseH/2 + 3}" text-anchor="middle" class="lbl" style="fill:#fff;font-size:10px;font-weight:600;">좌대 ${col.width}${assemblyLabel?` (${assemblyLabel})`:''}</text>`;
+      // 좌대 없는 일반 컬럼 (부품 단독 등): 폭 라벨만 표시
+      out += `<text x="${x + w/2}" y="${sy + tierH*5 + baseH/2 + 16}" text-anchor="middle" class="lbl t">${col.width}mm</text>`;
     }
-    out += `<text x="${x + w/2}" y="${baseY + baseH + 16}" text-anchor="middle" class="lbl t">${col.width}mm</text>`;
     x += w + gap;
   }
 
