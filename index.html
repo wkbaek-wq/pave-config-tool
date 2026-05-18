@@ -1997,8 +1997,9 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
     const hingeSide = (ci === 0) ? 'left'
                     : (ci === columns.length - 1) ? 'right'
                     : ((ci % 2 === 1) ? 'right' : 'left');
-    // EP 단독 컬럼: 좌대·도어·몸통 없이 EP 패널만 + 좌대 영역 건너뜀
-    if (col.isEpOnlyCol) {
+    // EP 단독 컬럼: items.ep 가 실제로 남아있을 때만 EP 패널을 그림
+    // (EP 가 좌/우 슬롯으로 추출됐다면 col.items.ep 가 비어있어 그리지 않음)
+    if (col.isEpOnlyCol && col.items.ep && col.items.ep.length > 0) {
       out += renderEPPanel(x, sy, w, tierH * 5, 'mid');
       out += `<text x="${x + w/2}" y="${sy + tierH*5 + 16}" text-anchor="middle" class="lbl t">EP</text>`;
       x += w + gap;
@@ -2423,6 +2424,14 @@ function extractEndPanelsFromColumns() {
   if (eps.length >= 1 && !currentEPs.left) currentEPs.left = eps.shift();
   if (eps.length >= 1 && !currentEPs.right) currentEPs.right = eps.shift();
   for (const ep of eps) stagingParts.push(ep);
+
+  // EP 추출 후 부품이 하나도 남지 않은 컬럼(=EP-only 옵션이었던 컬럼)은 제거
+  if (currentColumns) {
+    const PART_TYPES = ['body','door','glass','mirror','drawer','flap','open','base','rod','shelf'];
+    currentColumns = currentColumns.filter(col =>
+      PART_TYPES.some(t => col.items[t] && col.items[t].length > 0)
+    );
+  }
 }
 
 function refreshAllUI() {
