@@ -1616,8 +1616,11 @@ function parseInput(text) {
       // 좌대 포함 여부로 단독 부품 옵션 감지 (D유형)
       const BASE_SKUS = new Set(['100115160','100115158','100115159','100115161','100111564','100111565']);
       const hasBase = entry.skus.some(([s, q]) => BASE_SKUS.has(s));
+      // 엔드패널(EP) 단독 옵션은 좌대 없는 게 정상 — 경고에서 제외
+      const isEpOnly = entry.skus.length > 0 && entry.skus.every(([s, q]) => SKU_DB[s] && SKU_DB[s].type === 'ep');
       meta.hasBase = hasBase;
-      if (!hasBase && !meta.isSystem) {
+      meta.isEpOnly = isEpOnly;
+      if (!hasBase && !meta.isSystem && !isEpOnly) {
         lastParseStats.partsOnlyOpts.push({ id: optionId, name: entry.name });
       }
       lastParseStats.optionMatched.push({ id: optionId, name: entry.name || '(이름 없음)', skuCount: entry.skus.length, qty, meta });
