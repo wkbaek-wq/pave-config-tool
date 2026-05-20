@@ -2242,16 +2242,19 @@ function renderDoors(doors, x, y, w, tierH, midY, hingeSide) {
       const hh = Math.min(h * 0.18, 32);
       const handleCenterY = curY + h * 0.58;
       const hy = handleCenterY - hh/2;
-      const hx = openingSide === 'right' ? x + w - 9 : x + 5;
+      const hx = openingSide === 'right' ? x + w - 6 : x + 3;
       const guide = !!showHandleGuide;
       const handleFill = guide ? '#dc2626' : '#2C2C2C';
 
       if (guide) {
-        // 빨간 점선 강조 박스 (손잡이 설치 위치)
-        const padX = 6, padY = 7;
-        const gx = hx - padX;
+        // 빨간 점선 강조 박스 (손잡이 + 다리 위치)
+        // cap이 본체에서 도어 안쪽 방향으로 향하므로 박스도 비대칭으로 확장
+        const padInner = 6;  // cap 쪽 (도어 안쪽)
+        const padOuter = 2;  // 도어 모서리 쪽
+        const padY = 7;
+        const gx = openingSide === 'right' ? hx - padInner : hx - padOuter;
         const gy = hy - padY;
-        const gw = 4 + padX*2;
+        const gw = padInner + 2.2 + padOuter;
         const gh = hh + padY*2;
         out += `<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="rgba(254,226,226,0.5)" stroke="#dc2626" stroke-width="1.4" stroke-dasharray="4 3" rx="3"/>`;
 
@@ -2280,23 +2283,23 @@ function renderDoors(doors, x, y, w, tierH, midY, hingeSide) {
         out += `<circle cx="${bumperX}" cy="${curY + h - bumperInset}" r="2.4" fill="#fb923c" stroke="#9a3412" stroke-width="0.8"/>`;
       }
 
-      // ── 외부에서 본 손잡이 ──
-      // 본체 = 가는 세로 막대 (도어 가장자리 안쪽)
-      // 다리(피스 체결부) = 점선으로 도어 모서리(가장자리) 방향으로 짧게 — ㄷ자 cap이 도어 모서리에 붙음
+      // ── 외부에서 본 손잡이 (][ 형태) ──
+      // 본체 = 도어 모서리(짝 가운데)에 가까이 → 두 컬럼 본체가 가운데에서 마주봄
+      // 다리(피스 체결부) = 점선으로 도어 안쪽(자기 도어 폭 안쪽, 옷장 외측) 방향으로 짧게
       const grabW = 2.2;
-      const legLen = 3;
+      const legLen = 3.5;
       const legY1 = hy + 1.0;
       const legY2 = hy + hh - 1.0;
-      // cap을 도어 모서리 방향으로: openingSide가 right면 cap이 우측(모서리)으로, left면 좌측(모서리)으로
-      const legStartX = openingSide === 'right' ? hx + grabW : hx;
-      const legEndX = openingSide === 'right' ? hx + grabW + legLen : hx - legLen;
-      // 그림자 — 잡는 막대 옆 도어 안쪽으로 떨어뜨려 입체감
+      // cap을 본체에서 도어 안쪽 방향으로 (openingSide=right면 cap이 좌측, left면 우측)
+      const legStartX = openingSide === 'right' ? hx : hx + grabW;
+      const legEndX = openingSide === 'right' ? hx - legLen : hx + grabW + legLen;
+      // 그림자 — 본체 옆 도어 안쪽으로 떨어뜨려 입체감
       const shadowDir = openingSide === 'right' ? -0.6 : 0.6;
       out += `<rect x="${hx + shadowDir}" y="${hy + 1.2}" width="${grabW}" height="${hh}" fill="#000" opacity="0.18" rx="1"/>`;
-      // 다리 (피스 체결부) — 점선, 도어 모서리 방향
+      // 다리 (피스 체결부) — 점선, 도어 안쪽(자기 도어 폭) 방향
       out += `<line x1="${legStartX}" y1="${legY1}" x2="${legEndX}" y2="${legY1}" stroke="${handleFill}" stroke-width="0.9" stroke-dasharray="1.4 1.2" stroke-linecap="round"/>`;
       out += `<line x1="${legStartX}" y1="${legY2}" x2="${legEndX}" y2="${legY2}" stroke="${handleFill}" stroke-width="0.9" stroke-dasharray="1.4 1.2" stroke-linecap="round"/>`;
-      // 잡는 본체
+      // 잡는 본체 — 도어 모서리 가까이
       out += `<rect x="${hx}" y="${hy}" width="${grabW}" height="${hh}" fill="${handleFill}" rx="1.1"/>`;
       out += `<text x="${x + w/2}" y="${curY + 14}" text-anchor="middle" class="lbl t" fill="#b45309" font-weight="700">핸들형</text>`;
     } else if (d.type === 'door') {
