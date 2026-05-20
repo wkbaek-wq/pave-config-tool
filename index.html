@@ -2035,7 +2035,7 @@ function renderHandleGuideBox(x, y, w) {
   const lines = [
     { dot: '#dc2626', text: '★ 손잡이 위치 — 도어 후면 보링 4개 중 「바닥면과 가장 가까운 하부 2개」 사용 (도어 길이의 약 58% 지점)' },
     { dot: '#9ca3af', text: '✕ 상부 보링 2개 — 사용하지 않음 (도어 후면 상부)' },
-    { dot: '#fb923c', text: '● 범퍼 2개 — 도어 후면 모서리 中 측판(에지면)과 닿는 위치(힌지 쪽 상·하단)' },
+    { dot: '#fb923c', text: '● 범퍼 2개 — 도어 후면 모서리 中 측판과 부딪히는 위치(힌지 반대편 = 손잡이 쪽 상·하단)' },
     { dot: '#2C2C2C', text: '구성품 — 손잡이 1 + 스크류 2 + 범퍼 2 (힌지 기존과 동일 · 푸쉬철물 제외)' }
   ];
   let ly = y + 38;
@@ -2272,13 +2272,25 @@ function renderDoors(doors, x, y, w, tierH, midY, hingeSide) {
         out += `<text x="${labelX}" y="${upperY + 2}" text-anchor="${labelAnchor}" class="lbl t" fill="#9ca3af" font-size="9" font-weight="700">상부 보링 사용 X</text>`;
         out += `<text x="${labelX}" y="${handleCenterY + 2}" text-anchor="${labelAnchor}" class="lbl t" fill="#dc2626" font-size="10" font-weight="700">★ 손잡이 위치 (하부 보링)</text>`;
 
-        // 범퍼 위치 마커 (도어 후면 상/하 모서리, 측판 닿는 쪽 = 힌지 측)
-        const bumperX = hingeSide === 'left' ? x + 4 : x + w - 4;
+        // 범퍼 위치 마커 — 도어가 닫힐 때 측판 에지에 부딪히는 쪽 (=힌지 반대편 = 손잡이 측) 후면 상·하단
+        const bumperX = openingSide === 'left' ? x + 4 : x + w - 4;
         out += `<circle cx="${bumperX}" cy="${curY + 6}" r="2.4" fill="#fb923c" stroke="#9a3412" stroke-width="0.8"/>`;
         out += `<circle cx="${bumperX}" cy="${curY + h - 6}" r="2.4" fill="#fb923c" stroke="#9a3412" stroke-width="0.8"/>`;
       }
 
-      out += `<rect x="${hx}" y="${hy}" width="4" height="${hh}" fill="${handleFill}" rx="1.5"/>`;
+      // ── 외부에서 본 ㄷ자 손잡이 (잡는 세로 막대 + 위/아래 cap + 그림자) ──
+      const grabW = 2.8;
+      const capLen = 5;
+      const capH = 1.4;
+      const dirOut = openingSide === 'right' ? 1 : -1; // 도어 가장자리 방향
+      const capX = openingSide === 'right' ? hx + grabW : hx - capLen;
+      // 그림자 — 도어 표면에서 살짝 떨어진 입체감
+      out += `<rect x="${hx - dirOut * 0.6}" y="${hy + 1.2}" width="${grabW}" height="${hh}" fill="#000" opacity="0.18" rx="1"/>`;
+      // 위/아래 cap (도어와 연결되는 부분)
+      out += `<rect x="${capX}" y="${hy}" width="${capLen}" height="${capH}" fill="${handleFill}" rx="0.4"/>`;
+      out += `<rect x="${capX}" y="${hy + hh - capH}" width="${capLen}" height="${capH}" fill="${handleFill}" rx="0.4"/>`;
+      // 잡는 본체 (외측 세로 막대)
+      out += `<rect x="${hx}" y="${hy}" width="${grabW}" height="${hh}" fill="${handleFill}" rx="1.2"/>`;
       out += `<text x="${x + w/2}" y="${curY + 14}" text-anchor="middle" class="lbl t" fill="#b45309" font-weight="700">핸들형</text>`;
     } else if (d.type === 'door') {
       // ── 푸쉬도어: 푸쉬철물 (검은 작은 원) ──
