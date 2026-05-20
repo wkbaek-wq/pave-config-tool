@@ -2278,18 +2278,20 @@ function renderDoors(doors, x, y, w, tierH, midY, hingeSide) {
         out += `<circle cx="${bumperX}" cy="${curY + h - 6}" r="2.4" fill="#fb923c" stroke="#9a3412" stroke-width="0.8"/>`;
       }
 
-      // ── 외부에서 본 ㄷ자 손잡이 (잡는 세로 막대 + 위/아래 cap + 그림자) ──
+      // ── 외부에서 본 ㄷ자 손잡이 ──
+      // 잡는 세로 막대는 도어 가장자리 가까이 두고, 위/아래 cap(도어 표면 부착부)은 도어 안쪽(컬럼 가운데) 방향으로 연장
+      // → 두 컬럼 짝의 손잡이 cap 이 서로 가운데에서 마주보는 형태
       const grabW = 2.8;
       const capLen = 5;
       const capH = 1.4;
-      const dirOut = openingSide === 'right' ? 1 : -1; // 도어 가장자리 방향
-      const capX = openingSide === 'right' ? hx + grabW : hx - capLen;
-      // 그림자 — 도어 표면에서 살짝 떨어진 입체감
-      out += `<rect x="${hx - dirOut * 0.6}" y="${hy + 1.2}" width="${grabW}" height="${hh}" fill="#000" opacity="0.18" rx="1"/>`;
-      // 위/아래 cap (도어와 연결되는 부분)
+      const innerDir = openingSide === 'right' ? -1 : 1; // 도어 안쪽(가운데) 방향
+      const capX = openingSide === 'right' ? hx - capLen : hx + grabW;
+      // 그림자 — 잡는 막대 옆 도어 가장자리 쪽에 떨어뜨려 입체감
+      out += `<rect x="${hx - innerDir * 0.6}" y="${hy + 1.2}" width="${grabW}" height="${hh}" fill="#000" opacity="0.18" rx="1"/>`;
+      // 위/아래 cap (도어 표면과 연결, 도어 안쪽=가운데 방향으로)
       out += `<rect x="${capX}" y="${hy}" width="${capLen}" height="${capH}" fill="${handleFill}" rx="0.4"/>`;
       out += `<rect x="${capX}" y="${hy + hh - capH}" width="${capLen}" height="${capH}" fill="${handleFill}" rx="0.4"/>`;
-      // 잡는 본체 (외측 세로 막대)
+      // 잡는 본체 (도어 가장자리 가까이)
       out += `<rect x="${hx}" y="${hy}" width="${grabW}" height="${hh}" fill="${handleFill}" rx="1.2"/>`;
       out += `<text x="${x + w/2}" y="${curY + 14}" text-anchor="middle" class="lbl t" fill="#b45309" font-weight="700">핸들형</text>`;
     } else if (d.type === 'door') {
