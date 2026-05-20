@@ -2278,21 +2278,23 @@ function renderDoors(doors, x, y, w, tierH, midY, hingeSide) {
         out += `<circle cx="${bumperX}" cy="${curY + h - 6}" r="2.4" fill="#fb923c" stroke="#9a3412" stroke-width="0.8"/>`;
       }
 
-      // ── 외부에서 본 ㄷ자 손잡이 ──
-      // 잡는 세로 막대는 도어 가장자리 가까이 두고, 위/아래 cap(도어 표면 부착부)은 도어 안쪽(컬럼 가운데) 방향으로 연장
-      // → 두 컬럼 짝의 손잡이 cap 이 서로 가운데에서 마주보는 형태
-      const grabW = 2.8;
-      const capLen = 5;
-      const capH = 1.4;
-      const innerDir = openingSide === 'right' ? -1 : 1; // 도어 안쪽(가운데) 방향
-      const capX = openingSide === 'right' ? hx - capLen : hx + grabW;
-      // 그림자 — 잡는 막대 옆 도어 가장자리 쪽에 떨어뜨려 입체감
-      out += `<rect x="${hx - innerDir * 0.6}" y="${hy + 1.2}" width="${grabW}" height="${hh}" fill="#000" opacity="0.18" rx="1"/>`;
-      // 위/아래 cap (도어 표면과 연결, 도어 안쪽=가운데 방향으로)
-      out += `<rect x="${capX}" y="${hy}" width="${capLen}" height="${capH}" fill="${handleFill}" rx="0.4"/>`;
-      out += `<rect x="${capX}" y="${hy + hh - capH}" width="${capLen}" height="${capH}" fill="${handleFill}" rx="0.4"/>`;
+      // ── 외부에서 본 손잡이 (실사진 비례) ──
+      // 본체 = 가는 세로 막대 (도어 가장자리 가까이)
+      // 다리(피스 체결부) = 점선으로 도어 안쪽(컬럼 가운데) 방향으로 짧게 — 두 컬럼 짝이 가운데에서 마주봄
+      const grabW = 2.2;
+      const legLen = 4.5;
+      const legY1 = hy + 1.2;
+      const legY2 = hy + hh - 1.2;
+      const legStartX = openingSide === 'right' ? hx : hx + grabW;
+      const legEndX = openingSide === 'right' ? hx - legLen : hx + grabW + legLen;
+      // 그림자 — 잡는 막대 옆 가장자리 쪽 입체감
+      const shadowDir = openingSide === 'right' ? 0.6 : -0.6;
+      out += `<rect x="${hx + shadowDir}" y="${hy + 1.2}" width="${grabW}" height="${hh}" fill="#000" opacity="0.18" rx="1"/>`;
+      // 다리 (피스 체결부) — 점선
+      out += `<line x1="${legStartX}" y1="${legY1}" x2="${legEndX}" y2="${legY1}" stroke="${handleFill}" stroke-width="0.9" stroke-dasharray="1.4 1.2" stroke-linecap="round"/>`;
+      out += `<line x1="${legStartX}" y1="${legY2}" x2="${legEndX}" y2="${legY2}" stroke="${handleFill}" stroke-width="0.9" stroke-dasharray="1.4 1.2" stroke-linecap="round"/>`;
       // 잡는 본체 (도어 가장자리 가까이)
-      out += `<rect x="${hx}" y="${hy}" width="${grabW}" height="${hh}" fill="${handleFill}" rx="1.2"/>`;
+      out += `<rect x="${hx}" y="${hy}" width="${grabW}" height="${hh}" fill="${handleFill}" rx="1.1"/>`;
       out += `<text x="${x + w/2}" y="${curY + 14}" text-anchor="middle" class="lbl t" fill="#b45309" font-weight="700">핸들형</text>`;
     } else if (d.type === 'door') {
       // ── 푸쉬도어: 푸쉬철물 (검은 작은 원) ──
