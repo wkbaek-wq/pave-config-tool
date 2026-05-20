@@ -121,6 +121,43 @@
   .photo-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
   .photo-actions .filename { color: #666; font-size: 13px; }
 
+  .diagram-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    background: linear-gradient(180deg, #fff8ee 0%, #fff3e0 100%);
+    border: 1px solid #f3d8a8;
+    border-radius: 8px;
+  }
+  .toolbar-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toolbar-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #dc2626;
+    cursor: pointer;
+  }
+  .toolbar-toggle .toggle-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #92400e;
+  }
+  .toolbar-toggle .toggle-hint {
+    font-size: 11px;
+    color: #b45309;
+    background: #fde68a;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
   .compare-container {
     display: grid;
     grid-template-columns: 1fr;
@@ -749,6 +786,13 @@
     <div class="card">
       <h2>4️⃣ 구성도 (생성 도면 ↔ 실제 사진 비교)</h2>
       <p class="hint">사진을 첨부하면 좌측에 생성 도면, 우측에 실제 사진이 나란히 표시됩니다.</p>
+      <div class="diagram-toolbar" id="diagram-toolbar">
+        <label class="toolbar-toggle" title="4·5단 핸들도어가 포함된 컬럼에 손잡이 설치 위치 가이드를 오버레이합니다">
+          <input type="checkbox" id="handle-guide-toggle" onchange="toggleHandleGuide()" />
+          <span class="toggle-label">🔧 핸들형 손잡이 설치 위치 가이드</span>
+          <span class="toggle-hint">4·5단 도어 한정 · 후면 하부 보링 2개 사용</span>
+        </label>
+      </div>
       <div class="compare-container" id="compare-container">
         <div class="compare-pane">
           <div class="compare-label">📐 생성된 도면</div>
@@ -1946,7 +1990,9 @@ function renderDiagram(columns) {
   const drawingHeight = TIER_H*5 + BASE_H;
   const totalSectionWidth = drawingWidth + 40;
   const SVG_W = Math.max(900, totalSectionWidth*2 + 80);
-  const SVG_H = TITLE_H + 30 + drawingHeight + 80;
+  const showGuideBox = showHandleGuide && hasHandleDoors(columns);
+  const guideBoxH = showGuideBox ? 110 : 0;
+  const SVG_H = TITLE_H + 30 + drawingHeight + 80 + guideBoxH;
   const startExternal = (SVG_W/2 - totalSectionWidth)/2 + 20;
   const startInternal = SVG_W/2 + (SVG_W/2 - totalSectionWidth)/2 + 20;
 
@@ -1973,8 +2019,32 @@ function renderDiagram(columns) {
   svg += `<text x="${startExternal + drawingWidth/2}" y="${TITLE_H}" text-anchor="middle" class="lbl h2">외부 (도어 닫힘)</text>`;
   svg += `<text x="${startInternal + drawingWidth/2}" y="${TITLE_H}" text-anchor="middle" class="lbl h2">내부 (몸통 구성)</text>`;
   svg += renderLegend(SVG_W/2, TITLE_H + 30 + drawingHeight + 36);
+  if (showGuideBox) {
+    svg += renderHandleGuideBox(40, TITLE_H + 30 + drawingHeight + 70, SVG_W - 80);
+  }
   svg += '</svg>';
   return svg;
+}
+
+function renderHandleGuideBox(x, y, w) {
+  const h = 96;
+  let out = '';
+  out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff7ed" stroke="#fb923c" stroke-width="1.4" rx="8"/>`;
+  out += `<text x="${x + 16}" y="${y + 20}" class="lbl" font-size="13" font-weight="700" fill="#9a3412">🔧 핸들형 손잡이 설치 위치 가이드 (대상: 4·5단 400/600 도어)</text>`;
+
+  const lines = [
+    { dot: '#dc2626', text: '★ 손잡이 위치 — 도어 후면 보링 4개 중 「바닥면과 가장 가까운 하부 2개」 사용 (도어 길이의 약 58% 지점)' },
+    { dot: '#9ca3af', text: '✕ 상부 보링 2개 — 사용하지 않음 (도어 후면 상부)' },
+    { dot: '#fb923c', text: '● 범퍼 2개 — 도어 후면 모서리 中 측판(에지면)과 닿는 위치(힌지 쪽 상·하단)' },
+    { dot: '#2C2C2C', text: '구성품 — 손잡이 1 + 스크류 2 + 범퍼 2 (힌지 기존과 동일 · 푸쉬철물 제외)' }
+  ];
+  let ly = y + 38;
+  for (const line of lines) {
+    out += `<circle cx="${x + 22}" cy="${ly - 3}" r="3" fill="${line.dot}"/>`;
+    out += `<text x="${x + 32}" y="${ly}" class="lbl" font-size="11" font-weight="600" fill="#7c2d12">${line.text}</text>`;
+    ly += 16;
+  }
+  return out;
 }
 
 function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
@@ -2166,11 +2236,49 @@ function renderDoors(doors, x, y, w, tierH, midY, hingeSide) {
 
     const isHandle = d.variant === 'handle';
     if (isHandle) {
-      // ── 핸들형 도어: 세로 막대 손잡이 (힌지 반대편 가장자리) ──
+      // ── 핸들형 도어 ──
+      // PDF 사양: 도어 후면 보링 4개(상부2/하부2) 중 "바닥면과 가장 가까운 하부 2개"만 사용
+      // → 정면에서 본 손잡이는 도어 길이의 약 58% 지점(중앙보다 살짝 아래)에 위치
+      const hh = Math.min(h * 0.18, 32);
+      const handleCenterY = curY + h * 0.58;
+      const hy = handleCenterY - hh/2;
       const hx = openingSide === 'right' ? x + w - 9 : x + 5;
-      const hh = Math.min(h * 0.22, 36);
-      const hy = curY + h/2 - hh/2;
-      out += `<rect x="${hx}" y="${hy}" width="4" height="${hh}" fill="#2C2C2C" rx="1.5"/>`;
+      const guide = !!showHandleGuide;
+      const handleFill = guide ? '#dc2626' : '#2C2C2C';
+
+      if (guide) {
+        // 빨간 점선 강조 박스 (손잡이 설치 위치)
+        const padX = 6, padY = 7;
+        const gx = hx - padX;
+        const gy = hy - padY;
+        const gw = 4 + padX*2;
+        const gh = hh + padY*2;
+        out += `<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="rgba(254,226,226,0.5)" stroke="#dc2626" stroke-width="1.4" stroke-dasharray="4 3" rx="3"/>`;
+
+        // 상부 보링(사용 X) — 도어 상부 약 25% 지점에 옅은 X 마크
+        const upperY = curY + h * 0.25;
+        const markX = openingSide === 'right' ? x + w - 7 : x + 7;
+        const xSize = 4;
+        out += `<g opacity="0.85">
+          <circle cx="${markX}" cy="${upperY - 5}" r="1.6" fill="none" stroke="#9ca3af" stroke-width="0.8"/>
+          <circle cx="${markX}" cy="${upperY + 5}" r="1.6" fill="none" stroke="#9ca3af" stroke-width="0.8"/>
+          <line x1="${markX - xSize}" y1="${upperY - xSize}" x2="${markX + xSize}" y2="${upperY + xSize}" stroke="#9ca3af" stroke-width="1.4"/>
+          <line x1="${markX - xSize}" y1="${upperY + xSize}" x2="${markX + xSize}" y2="${upperY - xSize}" stroke="#9ca3af" stroke-width="1.4"/>
+        </g>`;
+
+        // 안내 라벨 (도어 폭이 작아도 안전하게 도어 안쪽 텍스트로)
+        const labelAnchor = openingSide === 'right' ? 'end' : 'start';
+        const labelX = openingSide === 'right' ? x + w - 14 : x + 14;
+        out += `<text x="${labelX}" y="${upperY + 2}" text-anchor="${labelAnchor}" class="lbl t" fill="#9ca3af" font-size="9" font-weight="700">상부 보링 사용 X</text>`;
+        out += `<text x="${labelX}" y="${handleCenterY + 2}" text-anchor="${labelAnchor}" class="lbl t" fill="#dc2626" font-size="10" font-weight="700">★ 손잡이 위치 (하부 보링)</text>`;
+
+        // 범퍼 위치 마커 (도어 후면 상/하 모서리, 측판 닿는 쪽 = 힌지 측)
+        const bumperX = hingeSide === 'left' ? x + 4 : x + w - 4;
+        out += `<circle cx="${bumperX}" cy="${curY + 6}" r="2.4" fill="#fb923c" stroke="#9a3412" stroke-width="0.8"/>`;
+        out += `<circle cx="${bumperX}" cy="${curY + h - 6}" r="2.4" fill="#fb923c" stroke="#9a3412" stroke-width="0.8"/>`;
+      }
+
+      out += `<rect x="${hx}" y="${hy}" width="4" height="${hh}" fill="${handleFill}" rx="1.5"/>`;
       out += `<text x="${x + w/2}" y="${curY + 14}" text-anchor="middle" class="lbl t" fill="#b45309" font-weight="700">핸들형</text>`;
     } else if (d.type === 'door') {
       // ── 푸쉬도어: 푸쉬철물 (검은 작은 원) ──
@@ -2327,6 +2435,20 @@ function validateAll(columns, accessoryCount) {
 }
 
 let currentColumns = null;
+let showHandleGuide = false;
+
+function toggleHandleGuide() {
+  const el = document.getElementById('handle-guide-toggle');
+  showHandleGuide = !!(el && el.checked);
+  if (currentColumns) {
+    document.getElementById('diagram-area').innerHTML = renderDiagram(currentColumns);
+  }
+}
+
+function hasHandleDoors(columns) {
+  if (!columns) return false;
+  return columns.some(c => (c.items && c.items.door || []).some(d => d.variant === 'handle'));
+}
 
 function generate() {
   const text = document.getElementById('input').value;
