@@ -203,7 +203,8 @@
   }
   .columns-editor {
     display: flex;
-    gap: 10px;
+    flex-direction: column; /* 보관함(얇은 바) 위 + 컬럼 행 아래 */
+    gap: 4px;
     overflow-x: auto;
     padding: 8px 4px 14px;
   }
@@ -261,6 +262,33 @@
   .col-edit.col-dragging { opacity: 0.4; transform: scale(0.96); }
   .col-edit.col-drop-left  { box-shadow: -3px 0 0 #4f7cf6; }
   .col-edit.col-drop-right { box-shadow:  3px 0 0 #4f7cf6; }
+
+  /* 두벽면(ㄱ자) 분할 경계 */
+  .wall-divider {
+    flex: 0 0 14px; align-self: stretch; margin: 0 1px; border-radius: 5px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    background: #f1f3f7; border: 1px dashed #cbd5e1; color: #94a3b8;
+    font-size: 10px; font-weight: 600; writing-mode: vertical-rl; letter-spacing: 2px;
+    transition: all 0.15s; user-select: none;
+  }
+  .wall-divider:hover { background: #e0e7ff; border-color: #4f7cf6; color: #4f7cf6; }
+  .wall-divider.active {
+    flex-basis: 24px; background: repeating-linear-gradient(45deg, #fff7ed, #fff7ed 4px, #fed7aa 4px, #fed7aa 6px);
+    border: 2px solid #fb923c; color: #9a3412; font-weight: 700;
+  }
+  .wall-divider.active:hover { border-color: #ea580c; }
+
+  /* 도면 상단 고정 (편집하며 보기) */
+  .diagram-card.pinned {
+    position: sticky; top: 8px; z-index: 60;
+    max-height: 52vh; overflow: auto;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+    border: 1px solid #c7d2fe;
+  }
+  .diagram-card.pinned h2 { font-size: 14px; margin-bottom: 4px; }
+  .diagram-card.pinned .hint { display: none; }
+  .diagram-card.pinned #diagram-svg { max-height: 34vh; width: auto; max-width: 100%; margin: 0 auto; }
+  .diagram-card.pinned .btn-row { margin-top: 4px; }
   .col-move-row {
     display: flex;
     align-items: center;
@@ -317,7 +345,8 @@
     outline-offset: -3px;
   }
   .part-card {
-    padding: 7px 9px;
+    height: 32px;
+    padding: 0 8px;
     border-radius: 6px;
     font-size: 11px;
     cursor: grab;
@@ -325,10 +354,21 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 4px;
     border-left: 3px solid #888;
     background: #f0f2f5;
     transition: transform 0.1s, opacity 0.15s;
   }
+  .part-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .part-card .card-actions { flex: 0 0 auto; }
+  /* 컬럼 안에서는 폭 표기 생략 (헤더에 600/400 이미 표시) — 보관함/EP에서만 표시 */
+  .parts-drop-zone .part-w { display: none; }
   .part-card:active { cursor: grabbing; transform: scale(0.96); }
   .part-card.dragging { opacity: 0.4; }
   /* 끼워넣기 위치 표시선 */
@@ -352,14 +392,14 @@
   .part-card.open.exposed { background: #1a1a1a; color: #FFD18A; border-color: #000; }
   .part-card.drawer, .part-card.flap { background: #e8d8b8; border-color: #5a4f3f; color: #4a3a20; }
   .toggle-btn {
-    padding: 2px 6px;
+    padding: 2px 5px;
     border: 1px solid #888;
     background: white;
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
     cursor: pointer;
-    margin-left: 6px;
+    margin-left: 2px;
   }
   .toggle-btn:hover { background: #f0f5ff; border-color: #4f7cf6; }
   kbd {
@@ -370,15 +410,15 @@
     font-size: 11px;
     font-family: monospace;
   }
-  /* 임시 보관함 */
+  /* 임시 보관함 (컴팩트) */
   .staging-row {
     background: #fafbfc;
     border: 2px dashed #d0d4da;
     border-radius: 10px;
-    padding: 10px 14px;
-    margin-bottom: 12px;
+    padding: 5px 10px;
+    margin-bottom: 8px;
     transition: all 0.15s;
-    min-height: 70px;
+    min-height: 0;
   }
   .staging-row.drag-over {
     background: #eff6ff;
@@ -389,7 +429,7 @@
     font-size: 12px;
     font-weight: 700;
     color: #555;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -404,14 +444,14 @@
   .staging-parts {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    min-height: 36px;
+    gap: 5px;
+    min-height: 24px;
     align-items: flex-start;
   }
   .staging-empty {
     color: #aaa;
-    font-size: 12px;
-    padding: 6px;
+    font-size: 11px;
+    padding: 2px 4px;
     font-style: italic;
   }
   .cols-row {
@@ -422,9 +462,9 @@
   }
   .card-actions { display: flex; gap: 3px; align-items: center; }
   .move-btn {
-    width: 22px; height: 22px; padding: 0;
+    width: 18px; height: 20px; padding: 0;
     border: 1px solid #ccc; background: white; border-radius: 4px;
-    font-size: 13px; cursor: pointer;
+    font-size: 12px; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
     color: #555;
   }
@@ -783,7 +823,7 @@
       <div id="validation" class="validation"></div>
     </div>
 
-    <div class="card">
+    <div class="card diagram-card" id="card-diagram">
       <h2>4️⃣ 구성도 (생성 도면 ↔ 실제 사진 비교)</h2>
       <p class="hint">사진을 첨부하면 좌측에 생성 도면, 우측에 실제 사진이 나란히 표시됩니다.</p>
       <div class="diagram-toolbar" id="diagram-toolbar">
@@ -791,6 +831,11 @@
           <input type="checkbox" id="handle-guide-toggle" onchange="toggleHandleGuide()" />
           <span class="toggle-label">🔧 핸들형 손잡이 설치 위치 가이드</span>
           <span class="toggle-hint">4·5단 도어 한정 · 후면 하부 보링 2개 사용</span>
+        </label>
+        <label class="toolbar-toggle" title="도면을 화면 상단에 고정해 아래 편집기에서 작업할 때도 항상 보이게 합니다">
+          <input type="checkbox" id="pin-diagram-toggle" onchange="togglePinDiagram()" checked />
+          <span class="toggle-label">📌 도면 상단 고정</span>
+          <span class="toggle-hint">편집 중에도 도면이 따라다님</span>
         </label>
       </div>
       <div class="compare-container" id="compare-container">
@@ -2005,8 +2050,11 @@ function renderDiagram(columns) {
   if (!columns.length) return '';
   const SCALE = 0.25, TIER_H = 90, COL_GAP = 4, BASE_H = 22, TITLE_H = 30;
   const EP_W = 8;
+  const CORNER_GAP = 30; // 두벽면 분할 시 코너 표시 폭
+  const splitIdx = effectiveWallSplit(columns);
+  const cornerExtra = splitIdx != null ? CORNER_GAP - COL_GAP : 0;
   const epExtra = (currentEPs.left ? EP_W + COL_GAP : 0) + (currentEPs.right ? EP_W + COL_GAP : 0);
-  const drawingWidth = columns.reduce((s,c)=>s + c.width*SCALE, 0) + COL_GAP * (columns.length-1) + epExtra;
+  const drawingWidth = columns.reduce((s,c)=>s + c.width*SCALE, 0) + COL_GAP * (columns.length-1) + epExtra + cornerExtra;
   const drawingHeight = TIER_H*5 + BASE_H;
   const totalSectionWidth = drawingWidth + 40;
   const SVG_W = Math.max(900, totalSectionWidth*2 + 80);
@@ -2025,6 +2073,10 @@ function renderDiagram(columns) {
       <linearGradient id="mirrorP" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#444"/><stop offset="0.5" stop-color="#777"/><stop offset="1" stop-color="#333"/>
       </linearGradient>
+      <pattern id="wallHatchP" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+        <rect width="6" height="6" fill="#eef1f5"/>
+        <line x1="0" y1="0" x2="0" y2="6" stroke="#94a3b8" stroke-width="1.6"/>
+      </pattern>
     </defs>
     <style>
       .lbl { font-family: -apple-system, system-ui, sans-serif; }
@@ -2069,8 +2121,11 @@ function renderHandleGuideBox(x, y, w) {
 
 function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
   const EP_W = 8; // EP 시각 폭 (px)
+  const CORNER_GAP = 30;
   const colHeight = tierH * 5 + baseH;
+  const splitIdx = effectiveWallSplit(columns);
   let out = '', x = sx;
+  let wallAStartX = null, wallBStartX = null, wallAEndX = null, wallBEndX = null;
 
   // 좌측 EP
   if (currentEPs.left) {
@@ -2083,16 +2138,31 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
   for (let ci = 0; ci < columns.length; ci++) {
     const col = columns[ci];
     const w = col.width * scale;
-    // 힌지 위치: 양 끝 컬럼은 바깥쪽, 중간은 좌/우 번갈아 (페이브 표준 조립 가이드)
-    const hingeSide = (ci === 0) ? 'left'
-                    : (ci === columns.length - 1) ? 'right'
-                    : ((ci % 2 === 1) ? 'right' : 'left');
+    if (splitIdx != null) {
+      if (ci === 0) wallAStartX = x;
+      if (ci === splitIdx) wallAEndX = x + w;
+      if (ci === splitIdx + 1) wallBStartX = x;
+      if (ci === columns.length - 1) wallBEndX = x + w;
+    }
+    // 힌지 위치: 벽면(분할 구간)별로 양 끝 컬럼은 바깥쪽, 중간은 좌/우 번갈아 (페이브 표준 조립 가이드)
+    // 두벽면 모드: 코너에 닿는 끝 컬럼도 그 벽면의 '끝'으로 취급 → 힌지가 코너 쪽, 손잡이는 코너 반대쪽
+    const gStart = (splitIdx != null && ci > splitIdx) ? splitIdx + 1 : 0;
+    const gEnd   = (splitIdx != null && ci <= splitIdx) ? splitIdx : columns.length - 1;
+    const gi = ci - gStart, gLen = gEnd - gStart + 1;
+    const hingeSide = (gi === 0) ? 'left'
+                    : (gi === gLen - 1) ? 'right'
+                    : ((gi % 2 === 1) ? 'right' : 'left');
     // EP 단독 컬럼: items.ep 가 실제로 남아있을 때만 EP 패널을 그림
     // (EP 가 좌/우 슬롯으로 추출됐다면 col.items.ep 가 비어있어 그리지 않음)
     if (col.isEpOnlyCol && col.items.ep && col.items.ep.length > 0) {
       out += renderEPPanel(x, sy, w, tierH * 5, 'mid');
       out += `<text x="${x + w/2}" y="${sy + tierH*5 + 16}" text-anchor="middle" class="lbl t">EP</text>`;
-      x += w + gap;
+      if (splitIdx != null && ci === splitIdx) {
+        out += renderCornerStrip(x + w, sy, CORNER_GAP, colHeight);
+        x += w + CORNER_GAP;
+      } else {
+        x += w + gap;
+      }
       continue;
     }
 
@@ -2121,7 +2191,18 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
       // 좌대 없는 일반 컬럼 (부품 단독 등): 폭 라벨만 표시
       out += `<text x="${x + w/2}" y="${sy + tierH*5 + baseH/2 + 16}" text-anchor="middle" class="lbl t">${col.width}mm</text>`;
     }
-    x += w + gap;
+    if (splitIdx != null && ci === splitIdx) {
+      out += renderCornerStrip(x + w, sy, CORNER_GAP, colHeight);
+      x += w + CORNER_GAP;
+    } else {
+      x += w + gap;
+    }
+  }
+
+  // 두벽면 모드: 벽면 A/B 라벨
+  if (splitIdx != null && wallAStartX != null && wallBStartX != null) {
+    out += `<text x="${(wallAStartX + wallAEndX) / 2}" y="${sy - 18}" text-anchor="middle" class="lbl" style="fill:#0369a1;font-size:11px;font-weight:700;">벽면 A</text>`;
+    out += `<text x="${(wallBStartX + wallBEndX) / 2}" y="${sy - 18}" text-anchor="middle" class="lbl" style="fill:#9a3412;font-size:11px;font-weight:700;">벽면 B</text>`;
   }
 
   // 우측 EP
@@ -2135,6 +2216,15 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
     out += `<line x1="${sx - 2}" y1="${midLineY}" x2="${x + 2}" y2="${midLineY}" stroke="#4f7cf6" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.7"/>`;
     out += `<text x="${x + 6}" y="${midLineY + 3}" class="lbl" style="fill:#4f7cf6;font-size:9px;font-weight:700;">중간 라인</text>`;
   }
+  return out;
+}
+
+// 두벽면(ㄱ자) 코너 표시 — 벽 해칭 스트립. 양쪽 면 모두 벽에 닿으므로 EP 불가.
+function renderCornerStrip(x, y, gapW, h) {
+  const stripW = 14;
+  const sx = x + (gapW - stripW) / 2;
+  let out = `<rect x="${sx}" y="${y}" width="${stripW}" height="${h}" fill="url(#wallHatchP)" stroke="#94a3b8" stroke-width="1"/>`;
+  out += `<text x="${sx + stripW/2}" y="${y + h/2}" text-anchor="middle" class="lbl" style="fill:#475569;font-size:9px;font-weight:700;" transform="rotate(-90 ${sx + stripW/2} ${y + h/2})">ㄱ자 코너 (벽)</text>`;
   return out;
 }
 
@@ -2477,6 +2567,23 @@ function validateAll(columns, accessoryCount) {
 }
 
 let currentColumns = null;
+
+// ====================== 두벽면(ㄱ자) 분할 ======================
+// wallSplitIdx = 분할 경계: 컬럼 [0..idx] = 벽면 A, [idx+1..] = 벽면 B. null = 한 벽면.
+// 코너 = 분할 지점 (A의 오른쪽 끝 = B의 왼쪽 끝). 노출면 = A 왼끝·B 오른끝 → 기존 좌/우 EP 슬롯 그대로.
+let wallSplitIdx = null;
+
+// 컬럼 수 변동 시 경계가 범위를 벗어나면 무효 처리
+function effectiveWallSplit(columns) {
+  if (wallSplitIdx == null || !columns) return null;
+  if (wallSplitIdx < 0 || wallSplitIdx >= columns.length - 1) return null;
+  return wallSplitIdx;
+}
+
+function toggleWallSplit(boundaryIdx) {
+  wallSplitIdx = (wallSplitIdx === boundaryIdx) ? null : boundaryIdx;
+  refreshAllUI();
+}
 let showHandleGuide = false;
 
 function toggleHandleGuide() {
@@ -2485,6 +2592,25 @@ function toggleHandleGuide() {
   if (currentColumns) {
     document.getElementById('diagram-area').innerHTML = renderDiagram(currentColumns);
   }
+}
+
+// 도면 상단 고정 토글 (편집기 작업 중에도 도면이 보이도록)
+function togglePinDiagram() {
+  const el = document.getElementById('pin-diagram-toggle');
+  const card = document.getElementById('card-diagram');
+  if (!card) return;
+  const on = !!(el && el.checked);
+  card.classList.toggle('pinned', on);
+  try { localStorage.setItem('pave-pin-diagram', on ? '1' : '0'); } catch (e) {}
+}
+
+function initPinDiagram() {
+  let on = true; // 기본: 고정
+  try { on = localStorage.getItem('pave-pin-diagram') !== '0'; } catch (e) {}
+  const el = document.getElementById('pin-diagram-toggle');
+  if (el) el.checked = on;
+  const card = document.getElementById('card-diagram');
+  if (card) card.classList.toggle('pinned', on);
 }
 
 function hasHandleDoors(columns) {
@@ -2640,8 +2766,9 @@ function renderEditor(columns) {
   html += `<div class="editor-main-row">`;
 
   // 좌측 EP 슬롯
+  const splitIdxForEp = effectiveWallSplit(columns);
   html += `<div class="edge-slot">
-    <div class="edge-slot-header">↤ 좌측 EP</div>
+    <div class="edge-slot-header">↤ 좌측 EP${splitIdxForEp != null ? '<br><span style="font-weight:400;color:#0369a1;">(벽면A 노출면)</span>' : ''}</div>
     <div class="edge-slot-drop" data-col="left-ep"
          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">`;
   if (currentEPs.left) {
@@ -2652,8 +2779,17 @@ function renderEditor(columns) {
   html += `</div></div>`;
 
   // 중앙 컬럼 영역
+  const splitIdx = effectiveWallSplit(columns);
   html += `<div class="cols-row" style="flex:1;">`;
   columns.forEach((col, i) => {
+    // 컬럼 사이 분할 경계 (클릭으로 두벽면 분할 토글)
+    if (i > 0 && columns.length >= 2) {
+      const bIdx = i - 1;
+      const isActive = splitIdx === bIdx;
+      html += `<div class="wall-divider ${isActive ? 'active' : ''}" onclick="toggleWallSplit(${bIdx})"
+        title="${isActive ? '클릭: 두벽면 분할 해제' : '클릭: 여기서 벽면 분할 (ㄱ자 코너)'}">${isActive ? 'ㄱ 코너' : '분할'}</div>`;
+    }
+    const wallTag = splitIdx == null ? '' : (i <= splitIdx ? ' <b style="color:#0369a1;">A</b>' : ' <b style="color:#9a3412;">B</b>');
     const tier = col.tierSum != null ? col.tierSum : 0;
     const tierClass = tier === 5 ? 'ok' : 'fail';
     const leftDisabled = i === 0 ? 'disabled' : '';
@@ -2668,7 +2804,7 @@ function renderEditor(columns) {
            title="헤더를 드래그해 컬럼 순서 변경">
         <div class="col-move-row">
           <button class="col-move-btn" ${leftDisabled} onclick="moveColumn(${i}, -1)" title="왼쪽으로 이동">←</button>
-          <span class="col-name">컬럼 ${i+1} · ${col.width}mm</span>
+          <span class="col-name">컬럼 ${i+1} · ${col.width}mm${wallTag}</span>
           <button class="col-move-btn" ${rightDisabled} onclick="moveColumn(${i}, 1)" title="오른쪽으로 이동">→</button>
         </div>
         <span class="col-edit-tier ${tierClass}">내부 ${tier}/5단</span>
@@ -2687,7 +2823,7 @@ function renderEditor(columns) {
 
   // 우측 EP 슬롯
   html += `<div class="edge-slot">
-    <div class="edge-slot-header">↦ 우측 EP</div>
+    <div class="edge-slot-header">↦ 우측 EP${splitIdxForEp != null ? '<br><span style="font-weight:400;color:#9a3412;">(벽면B 노출면)</span>' : ''}</div>
     <div class="edge-slot-drop" data-col="right-ep"
          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">`;
   if (currentEPs.right) {
@@ -2729,6 +2865,7 @@ function renderPartCard(part, location) {
 
   const wDisplay = part.width ? `<span class="part-w">·${part.width}</span>` : '';
   return `<div class="part-card ${cardClass}" draggable="true" data-id="${part.id}" data-from="${location}"
+               title="${label}${part.width ? ' · ' + part.width + 'mm' : ''}"
                ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)"
                ondragover="handleCardDragOver(event)" ondragleave="handleCardDragLeave(event)" ondrop="handleCardDrop(event)">
     <span class="part-label">${label}${wDisplay}</span>
@@ -2750,8 +2887,20 @@ function getOrderedColumnParts(col) {
 
 // 카드 위로 드래그 — 위/아래 끼워넣기 위치 결정
 function handleCardDragOver(e) {
+  const cardEl = e.currentTarget;
+  // 컬럼 통째 드래그 중이면: 카드 위에서도 컬럼 이동으로 인식
+  if (columnDragData) {
+    const loc0 = parseLocation(cardEl.dataset.from);
+    if (typeof loc0 === 'number' && columnDragData.fromIdx !== loc0) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      showColumnIndicator(e, cardEl.closest('.col-edit'));
+    }
+    return;
+  }
   if (!dragData) return;
-  const card = e.currentTarget;
+  const card = cardEl;
   if (card.dataset.id === dragData.partId) return; // 자기 자신엔 못 놓음
   e.preventDefault();
   e.stopPropagation();
@@ -2775,10 +2924,20 @@ function handleCardDragOver(e) {
   e.dataTransfer.dropEffect = 'move';
 }
 function handleCardDragLeave(e) {
+  if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return;
   e.currentTarget.classList.remove('drop-above', 'drop-below', 'drop-invalid');
 }
 function handleCardDrop(e) {
   const card = e.currentTarget;
+  // 컬럼 통째 드래그 중이면 컬럼 이동으로 처리
+  if (columnDragData) {
+    e.preventDefault();
+    e.stopPropagation();
+    const loc0 = parseLocation(card.dataset.from);
+    if (typeof loc0 === 'number') doColumnDrop(e, loc0, card.closest('.col-edit'));
+    else handleColumnDragEnd(e);
+    return;
+  }
   if (!dragData || card.dataset.id === dragData.partId) {
     card.classList.remove('drop-above', 'drop-below', 'drop-invalid');
     dragData = null;
@@ -2876,20 +3035,22 @@ function handleColumnDragStart(e, idx) {
   e.stopPropagation();
 }
 
+// 컬럼 드래그 중 좌/우 삽입 indicator 표시 (헤더·본문·카드 어디서든 공용)
+function showColumnIndicator(e, colEl) {
+  if (!colEl) return;
+  const rect = colEl.getBoundingClientRect();
+  const isLeft = (e.clientX - rect.left) < rect.width / 2;
+  document.querySelectorAll('.col-edit.col-drop-left, .col-edit.col-drop-right')
+    .forEach(el => el.classList.remove('col-drop-left', 'col-drop-right'));
+  colEl.classList.add(isLeft ? 'col-drop-left' : 'col-drop-right');
+}
+
 function handleColumnDragOver(e, idx) {
   // 부품 드래그면 무시 (부품 드롭은 parts-drop-zone에서 처리)
   if (!columnDragData || columnDragData.fromIdx === idx) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
-  // 좌/우 indicator 표시 - 마우스 위치 기준
-  const colEl = e.currentTarget.closest('.col-edit');
-  if (!colEl) return;
-  const rect = colEl.getBoundingClientRect();
-  const isLeft = (e.clientX - rect.left) < rect.width / 2;
-  // 기존 indicator 모두 제거
-  document.querySelectorAll('.col-edit.col-drop-left, .col-edit.col-drop-right')
-    .forEach(el => el.classList.remove('col-drop-left', 'col-drop-right'));
-  colEl.classList.add(isLeft ? 'col-drop-left' : 'col-drop-right');
+  showColumnIndicator(e, e.currentTarget.closest('.col-edit'));
 }
 
 function handleColumnDragLeave(e) {
@@ -2900,11 +3061,17 @@ function handleColumnDrop(e, targetIdx) {
   if (!columnDragData) return;
   e.preventDefault();
   e.stopPropagation();
+  doColumnDrop(e, targetIdx, e.currentTarget.closest('.col-edit'));
+}
+
+// 컬럼 이동 실행 (헤더 drop 외에 본문/카드 drop에서도 위임 호출)
+function doColumnDrop(e, targetIdx, colEl) {
+  if (!columnDragData) return;
   const fromIdx = columnDragData.fromIdx;
-  if (fromIdx === targetIdx) return;
+  if (fromIdx === targetIdx) { handleColumnDragEnd(e); return; }
 
   // 좌/우 indicator로 삽입 위치 결정
-  const colEl = e.currentTarget.closest('.col-edit');
+  if (!colEl) { handleColumnDragEnd(e); return; }
   const rect = colEl.getBoundingClientRect();
   const isLeft = (e.clientX - rect.left) < rect.width / 2;
   // 새 인덱스 계산 (insert position)
@@ -2963,6 +3130,9 @@ function handleDragStart(e) {
 function handleDragEnd(e) {
   document.querySelectorAll('.part-card.dragging').forEach(c => c.classList.remove('dragging'));
   document.querySelectorAll('.drag-over, .drag-over-invalid').forEach(z => z.classList.remove('drag-over','drag-over-invalid'));
+  document.querySelectorAll('.part-card.drop-above, .part-card.drop-below, .part-card.drop-invalid')
+    .forEach(c => c.classList.remove('drop-above','drop-below','drop-invalid'));
+  dragData = null;
 }
 function isDropValid(targetLocation, partInfo) {
   if (!partInfo) return true;
@@ -2980,9 +3150,19 @@ function isDropValid(targetLocation, partInfo) {
 }
 
 function handleDragOver(e) {
-  e.preventDefault();
   const target = e.currentTarget;
   const targetLocation = parseLocation(target.dataset.col);
+  // 컬럼 통째 드래그 중이면: 컬럼 본문 위에서도 컬럼 이동으로 인식
+  if (columnDragData) {
+    if (typeof targetLocation === 'number' && columnDragData.fromIdx !== targetLocation) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      showColumnIndicator(e, target.closest('.col-edit'));
+    }
+    return;
+  }
+  e.preventDefault();
   let invalid = false;
   if (dragData) {
     const part = findPartByIdAndLocation(dragData.partId, dragData.sourceLocation);
@@ -2999,17 +3179,52 @@ function handleDragOver(e) {
   }
 }
 function handleDragLeave(e) {
+  // 자식 요소로 들어갈 때 발생하는 가짜 leave 무시 (indicator 깜빡임 방지)
+  if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return;
   e.currentTarget.classList.remove('drag-over', 'drag-over-invalid');
 }
 function handleDrop(e) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over', 'drag-over-invalid');
-  if (!dragData) return;
   const target = e.currentTarget;
   const targetLocation = parseLocation(target.dataset.col);
-  if (targetLocation === dragData.sourceLocation) { dragData = null; return; }
+  // 컬럼 통째 드래그면 컬럼 이동으로 처리
+  if (columnDragData) {
+    e.stopPropagation();
+    if (typeof targetLocation === 'number') doColumnDrop(e, targetLocation, target.closest('.col-edit'));
+    else handleColumnDragEnd(e);
+    return;
+  }
+  if (!dragData) return;
+  if (targetLocation === dragData.sourceLocation) {
+    // 같은 위치의 빈 공간에 드롭 = 맨 아래(끝)로 이동
+    movePartToEnd(dragData.partId, targetLocation);
+    dragData = null;
+    return;
+  }
   movePartLocation(dragData.partId, dragData.sourceLocation, targetLocation);
   dragData = null;
+}
+
+// 같은 컬럼/보관함 내에서 맨 끝으로 이동 (빈 공간 드롭 시)
+function movePartToEnd(partId, loc) {
+  if (loc === 'staging') {
+    const i = stagingParts.findIndex(p => p.id === partId);
+    if (i < 0 || i === stagingParts.length - 1) return;
+    const [p] = stagingParts.splice(i, 1);
+    stagingParts.push(p);
+    refreshAllUI();
+    return;
+  }
+  if (typeof loc !== 'number') return;
+  const col = currentColumns[loc];
+  if (!col || !col.order) return;
+  const oi = col.order.indexOf(partId);
+  if (oi < 0 || oi === col.order.length - 1) return;
+  col.order.splice(oi, 1);
+  col.order.push(partId);
+  recomputeColumn(col);
+  refreshAllUI();
 }
 
 function findPartByIdAndLocation(partId, location) {
@@ -3514,6 +3729,7 @@ window.addEventListener('DOMContentLoaded', () => {
   try { updateApiKeyStatus(); } catch (e) {}
   try { updateTemplatePreview(); } catch (e) {}
   try { restoreCardStates(); } catch (e) {}
+  try { initPinDiagram(); } catch (e) {}
 });
 
 function downloadPNG() {
