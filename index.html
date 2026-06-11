@@ -8,85 +8,100 @@
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
-    background: #f5f6f8;
+    background: #f2f2ef;
     margin: 0;
-    padding: 16px;
-    color: #222;
+    padding: 22px 28px;
+    color: #1d1d1b;
     line-height: 1.5;
   }
   .container { max-width: none; margin: 0; width: 100%; }
-  header { margin-bottom: 28px; }
-  h1 { font-size: 28px; margin: 0 0 6px 0; color: #1a1a1a; }
-  .subtitle { color: #666; margin: 0; font-size: 15px; }
+  header {
+    margin-bottom: 26px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e1e1dc;
+    display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+    color: #8a8a84; margin: 0; text-transform: uppercase;
+  }
+  h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; margin: 0; color: #1d1d1b; }
+  .subtitle { color: #8a8a84; margin: 0; font-size: 13px; }
 
   .card {
-    background: white;
-    border-radius: 14px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    background: #ffffff;
+    border: 1px solid #e7e7e2;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
   }
   .card h2 {
-    font-size: 18px;
-    margin: 0 0 16px 0;
-    color: #1a1a1a;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 0 0 14px 0;
+    color: #1d1d1b;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
-  .card .hint { color: #666; font-size: 13px; margin: -8px 0 12px 0; }
+  .sec-no {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    color: #b3b3ac; font-variant-numeric: tabular-nums;
+  }
+  .card .hint { color: #8a8a84; font-size: 12.5px; margin: -6px 0 12px 0; }
 
   textarea {
     width: 100%;
     min-height: 180px;
-    border: 1.5px solid #e0e3e8;
-    border-radius: 10px;
+    border: 1px solid #ddddd6;
+    border-radius: 3px;
     padding: 14px;
     font-family: 'SF Mono', Monaco, Consolas, monospace;
     font-size: 13px;
     resize: vertical;
     line-height: 1.6;
   }
-  textarea:focus { outline: none; border-color: #4f7cf6; }
+  textarea:focus { outline: none; border-color: #1d1d1b; }
 
   .btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 10px 18px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 9px 18px;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    font-size: 13px;
     font-weight: 600;
+    letter-spacing: 0.02em;
     cursor: pointer;
     transition: all 0.15s;
   }
-  .btn-primary { background: #1a1a1a; color: white; }
-  .btn-primary:hover { background: #333; }
-  .btn-secondary { background: #f0f2f5; color: #333; }
-  .btn-secondary:hover { background: #e4e7eb; }
+  .btn-primary { background: #1d1d1b; color: white; }
+  .btn-primary:hover { background: #3a3a36; }
+  .btn-secondary { background: #fff; color: #1d1d1b; border-color: #d6d6cf; }
+  .btn-secondary:hover { border-color: #1d1d1b; }
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 880px) { .grid-2 { grid-template-columns: 1fr; } }
 
   .stat {
-    background: #f8f9fb;
-    padding: 14px 16px;
-    border-radius: 10px;
-    border-left: 3px solid #4f7cf6;
+    background: #fff;
+    padding: 12px 0 0;
+    border-top: 2px solid #1d1d1b;
   }
-  .stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
-  .stat-value { font-size: 22px; font-weight: 700; color: #1a1a1a; }
+  .stat-label { font-size: 11px; letter-spacing: 0.08em; color: #8a8a84; margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 600; color: #1d1d1b; font-variant-numeric: tabular-nums; }
 
   .validation { display: grid; gap: 10px; }
   .check {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-size: 14px;
+    padding: 11px 14px;
+    border-radius: 3px;
+    font-size: 13px;
   }
   .check.pass { background: #ecfdf5; color: #047857; }
   .check.warn { background: #fffbeb; color: #b45309; }
@@ -94,9 +109,10 @@
   .check-icon { font-size: 18px; }
 
   #diagram-area {
-    background: #fafbfc;
-    border-radius: 10px;
-    padding: 16px;
+    background: #fafaf8;
+    border: 1px solid #ecece7;
+    border-radius: 3px;
+    padding: 10px;
     overflow-x: auto;
   }
 
@@ -124,13 +140,17 @@
   .diagram-toolbar {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 18px;
     flex-wrap: wrap;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-    background: linear-gradient(180deg, #fff8ee 0%, #fff3e0 100%);
-    border: 1px solid #f3d8a8;
-    border-radius: 8px;
+    padding: 8px 0;
+    margin-bottom: 10px;
+    border-top: 1px solid #ecece7;
+    border-bottom: 1px solid #ecece7;
+  }
+  .diagram-toolbar .toolbar-spacer { flex: 1; }
+  .btn-download {
+    padding: 7px 14px;
+    font-size: 12px;
   }
   .toolbar-toggle {
     display: inline-flex;
@@ -193,13 +213,14 @@
 
   /* 드래그 편집기 */
   .editor-hint {
-    background: #fffbeb;
-    border-left: 3px solid #f59e0b;
+    background: #fafaf8;
+    border: 1px solid #ecece7;
+    border-left: 2px solid #1d1d1b;
     padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    color: #78350f;
-    margin-bottom: 14px;
+    border-radius: 3px;
+    font-size: 12.5px;
+    color: #55554f;
+    margin-bottom: 12px;
   }
   .columns-editor {
     display: flex;
@@ -617,38 +638,38 @@
   .card.collapsible.collapsed h2 { margin-bottom: 0; }
 
   /* ── 표준 템플릿 빠른 추가 ── */
-  .template-card { background: linear-gradient(135deg, #fdfcf8 0%, #f7f4ed 100%); border: 1.5px solid #ead9b8; }
-  .template-card h2 { color: #6b4d18; }
+  .template-card { background: #fff; border: 1px solid #e7e7e2; }
+  .template-card h2 { color: #1d1d1b; }
   .template-row {
     display: grid;
     grid-template-columns: 1.6fr 0.8fr 1fr 1fr 0.6fr 0.6fr auto;
-    gap: 10px;
+    gap: 8px;
     align-items: end;
-    margin-top: 8px;
+    margin-top: 4px;
   }
   @media (max-width: 1100px) {
     .template-row { grid-template-columns: 1fr 1fr 1fr; }
   }
   .template-field { display: flex; flex-direction: column; gap: 4px; }
-  .template-field label { font-size: 11px; color: #6b4d18; font-weight: 700; letter-spacing: 0.2px; }
+  .template-field label { font-size: 11px; color: #8a8a84; font-weight: 600; letter-spacing: 0.04em; }
   .template-field select, .template-field input {
-    padding: 9px 10px;
-    border: 1.5px solid #d6c393;
-    border-radius: 7px;
-    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid #ddddd6;
+    border-radius: 2px;
+    font-size: 12px;
     background: white;
     font-family: inherit;
-    color: #333;
+    color: #1d1d1b;
   }
-  .template-field select:focus, .template-field input:focus { outline: none; border-color: #b8941f; }
+  .template-field select:focus, .template-field input:focus { outline: none; border-color: #1d1d1b; }
   .btn-template-add {
-    background: #b8941f; color: white; padding: 9px 14px; border: none; border-radius: 7px;
-    font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; height: 36px;
+    background: #1d1d1b; color: white; padding: 6px 14px; border: none; border-radius: 2px;
+    font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; height: 30px;
   }
   .btn-template-add:hover { background: #9a7c1a; }
   .btn-template-clear {
-    background: white; color: #6b4d18; padding: 9px 12px; border: 1.5px solid #d6c393; border-radius: 7px;
-    font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; height: 36px;
+    background: white; color: #1d1d1b; padding: 6px 12px; border: 1px solid #d6d6cf; border-radius: 2px;
+    font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; height: 30px;
   }
   .template-warn {
     margin-top: 10px;
@@ -677,13 +698,15 @@
 <body>
 <div class="container">
   <header>
-    <h1>🪟 페이브 옷장 구성도 생성기</h1>
+    <p class="eyebrow">Pave System Wardrobe</p>
+    <h1>옷장 구성도 생성기</h1>
     <p class="subtitle">주문된 SKU 리스트를 붙여넣으면 외부·내부 구성도가 자동 생성됩니다</p>
   </header>
 
-  <!-- 표준 템플릿 빠른 추가 (기본 접힘) -->
+
+    <!-- 표준 템플릿 빠른 추가 (기본 접힘) -->
   <div class="card template-card collapsible collapsed" id="card-template">
-    <h2 onclick="toggleCard('card-template')">🧩 표준 템플릿 빠른 추가</h2>
+    <h2 onclick="toggleCard('card-template')"><span class="sec-no">＋</span> 표준 템플릿 빠른 추가</h2>
     <div class="card-body">
     <p class="hint">8개 페이브 표준 모듈을 옵션과 함께 선택하면 SKU 리스트에 자동 추가됩니다. <b>다중 추가 가능</b> — 컬럼별로 패턴을 다르게 조합해 주문 구성을 만드세요.</p>
     <div class="template-row">
@@ -735,10 +758,10 @@
         <input type="number" id="tpl-qty" value="1" min="1" max="20" onchange="updateTemplatePreview()" />
       </div>
       <div class="template-field" style="justify-content:end;">
-        <button class="btn-template-clear" onclick="clearInputBeforeAdd()">↻ 비우기</button>
+        <button class="btn-template-clear" onclick="clearInputBeforeAdd()">비우기</button>
       </div>
       <div class="template-field" style="justify-content:end;">
-        <button class="btn-template-add" onclick="addTemplate()">➕ 추가</button>
+        <button class="btn-template-add" onclick="addTemplate()">추가</button>
       </div>
     </div>
     <div class="template-warn" id="tpl-warn"></div>
@@ -747,17 +770,17 @@
   </div>
 
   <div class="card">
-    <h2>1️⃣ SKU 리스트 또는 상품옵션 ID 붙여넣기</h2>
+    <h2><span class="sec-no">01</span> SKU 리스트 · 상품옵션 ID 입력</h2>
     <p class="hint">
-      <b>🆕 상품옵션 ID(8자리)도 지원!</b> 옵션ID 붙여넣으면 매핑된 SKU 세트로 자동 펼침 + <b>옵션 1개 = 컬럼 1개</b>로 자동 묶음 처리됩니다.<br>
+      <b>상품옵션 ID(8자리) 지원.</b> 옵션ID 붙여넣으면 매핑된 SKU 세트로 자동 펼침 + <b>옵션 1개 = 컬럼 1개</b>로 자동 묶음 처리됩니다.<br>
       · <b>옵션ID 8자리</b> (예: 29504814) → 그 옵션의 SKU 자동 펼침<br>
       · <b>SKU 9자리</b> (예: 100111575) → 기존대로 처리<br>
       · 수량 컬럼(옆 셀의 1~99 숫자) 자동 반영 · 둘 다 섞어도 OK
     </p>
     <div id="parse-feedback" class="parse-feedback" style="display:none;"></div>
-    <textarea id="input" placeholder="🆕 상품옵션 ID(8자리) 또는 SKU(9자리) 한 줄씩 붙여넣으세요:&#10;&#10;[예시 1] 상품옵션 ID:&#10;29504814&#10;29504815&#10;&#10;[예시 2] SKU 직접 입력:&#10;100111564&#10;100111572&#10;100111574&#10;100111580&#10;..."></textarea>
+    <textarea id="input" placeholder="상품옵션 ID(8자리) 또는 SKU(9자리)를 붙여넣으세요. 도면알림의 (외부상품 a, b, …) 한 줄 형식도 인식합니다:&#10;&#10;[예시 1] 상품옵션 ID:&#10;29504814&#10;29504815&#10;&#10;[예시 2] SKU 직접 입력:&#10;100111564&#10;100111572&#10;100111574&#10;100111580&#10;..."></textarea>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="generate()">▶ 구성도 생성</button>
+      <button class="btn btn-primary" onclick="generate()">구성도 생성</button>
       <button class="btn btn-secondary" onclick="loadExample(1)">예시 1 (1600mm 3컬럼)</button>
       <button class="btn btn-secondary" onclick="loadExample(2)">예시 2 (2400mm 4컬럼)</button>
       <button class="btn btn-secondary" onclick="loadExample(3)">예시 3 (옵션ID)</button>
@@ -767,17 +790,17 @@
 
   <!-- 사진 첨부 (기본 접힘) -->
   <div class="card collapsible collapsed" id="card-photo">
-    <h2 onclick="toggleCard('card-photo')">📷 참조 사진 첨부 (선택)</h2>
+    <h2 onclick="toggleCard('card-photo')"><span class="sec-no">＋</span> 참조 사진 첨부 (선택)</h2>
     <div class="card-body">
     <p class="hint">실제 옷장 사진을 첨부하면 생성된 구성도와 <b>나란히</b> 비교할 수 있어 검수 정확도가 올라갑니다. 파일 선택, 드래그앤드롭, 또는 클립보드 붙여넣기(<kbd>Cmd/Ctrl+V</kbd>) 모두 지원합니다.</p>
     <div class="photo-drop" id="photo-drop" onclick="document.getElementById('photo-input').click()">
-      <div class="icon">🖼️</div>
+      
       <div><b>여기를 클릭</b>하거나 사진을 끌어다 놓으세요</div>
       <div class="small">JPG · PNG · WebP 등 이미지 파일</div>
     </div>
     <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhotoFile(this.files[0])">
     <div class="photo-actions">
-      <button class="btn btn-secondary" id="photo-clear-btn" onclick="clearPhoto()" style="display:none">✕ 사진 제거</button>
+      <button class="btn btn-secondary" id="photo-clear-btn" onclick="clearPhoto()" style="display:none">사진 제거</button>
       <span class="filename" id="photo-filename"></span>
     </div>
 
@@ -805,7 +828,7 @@
 
   <div id="results" style="display:none;">
     <div class="card">
-      <h2>2️⃣ 주문 요약</h2>
+      <h2><span class="sec-no">02</span> 주문 요약</h2>
       <div class="grid-2">
         <div class="stat">
           <div class="stat-label">총 폭</div>
@@ -819,45 +842,44 @@
     </div>
 
     <div class="card">
-      <h2>3️⃣ 검증 결과</h2>
+      <h2><span class="sec-no">03</span> 검증 결과</h2>
       <div id="validation" class="validation"></div>
     </div>
 
     <div class="card diagram-card" id="card-diagram">
-      <h2>4️⃣ 구성도 (생성 도면 ↔ 실제 사진 비교)</h2>
+      <h2><span class="sec-no">04</span> 구성도 — 생성 도면 · 실제 사진 비교</h2>
       <p class="hint">사진을 첨부하면 좌측에 생성 도면, 우측에 실제 사진이 나란히 표시됩니다.</p>
       <div class="diagram-toolbar" id="diagram-toolbar">
         <label class="toolbar-toggle" title="4·5단 핸들도어가 포함된 컬럼에 손잡이 설치 위치 가이드를 오버레이합니다">
           <input type="checkbox" id="handle-guide-toggle" onchange="toggleHandleGuide()" />
-          <span class="toggle-label">🔧 핸들형 손잡이 설치 위치 가이드</span>
+          <span class="toggle-label">핸들형 손잡이 설치 가이드</span>
           <span class="toggle-hint">4·5단 도어 한정 · 후면 하부 보링 2개 사용</span>
         </label>
         <label class="toolbar-toggle" title="도면을 화면 상단에 고정해 아래 편집기에서 작업할 때도 항상 보이게 합니다">
           <input type="checkbox" id="pin-diagram-toggle" onchange="togglePinDiagram()" checked />
-          <span class="toggle-label">📌 도면 상단 고정</span>
+          <span class="toggle-label">도면 상단 고정</span>
           <span class="toggle-hint">편집 중에도 도면이 따라다님</span>
         </label>
+        <span class="toolbar-spacer"></span>
+        <button class="btn btn-primary btn-download" onclick="downloadPNG()">도면 다운로드 PNG</button>
       </div>
       <div class="compare-container" id="compare-container">
         <div class="compare-pane">
-          <div class="compare-label">📐 생성된 도면</div>
+          <div class="compare-label">생성 도면</div>
           <div id="diagram-area"></div>
         </div>
         <div class="compare-pane" id="photo-compare-pane" style="display:none;">
-          <div class="compare-label">📷 실제 사진</div>
+          <div class="compare-label">실제 사진</div>
           <img id="photo-compare-img" alt="실제 옷장 사진"/>
         </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="downloadPNG()">📥 최종 도면 다운로드 (PNG)</button>
       </div>
     </div>
 
     <!-- 드래그 편집기 -->
     <div class="card">
-      <h2>✏️ 구성 편집 (드래그로 사진과 일치시키기)</h2>
+      <h2><span class="sec-no">05</span> 구성 편집 — 드래그로 사진과 일치시키기</h2>
       <div class="editor-hint">
-        💡 <b>사용법</b><br>
+        <b>사용법</b><br>
         · 부품 순서 변경: <b>드래그로 끼워넣기</b> (파란 선 = 끼워넣을 위치) <b>또는</b> 카드의 <b>↑ ↓ 버튼</b><br>
         · 다른 컬럼으로 이동: 카드를 컬럼 사이에 드래그 (빈 공간 = 맨 끝, 카드 위 = 그 위/아래)<br>
         · <b>오픈장·몸통 카드의 [도어형/오픈형] 버튼</b> = 도어 가림 ↔ 도어 X 노출 전환 (1단 외에도 2/3/4단 몸통 오픈형 지원)<br>
@@ -868,7 +890,7 @@
     </div>
 
     <div class="card">
-      <h2>5️⃣ 부품 합계</h2>
+      <h2><span class="sec-no">06</span> 부품 합계</h2>
       <table class="parts-table">
         <thead>
           <tr><th>SKU 코드</th><th>부품명</th><th class="col-qty">수량</th></tr>
@@ -880,7 +902,6 @@
 
   <div id="empty" class="card">
     <div class="empty-state">
-      <div class="icon">📋</div>
       <div>위 입력란에 SKU 리스트를 붙여넣고 "구성도 생성" 버튼을 눌러주세요</div>
     </div>
   </div>
@@ -2106,7 +2127,7 @@ function renderHandleGuideBox(x, y, w) {
   const h = 96;
   let out = '';
   out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff7ed" stroke="#fb923c" stroke-width="1.4" rx="8"/>`;
-  out += `<text x="${x + 16}" y="${y + 20}" class="lbl" font-size="13" font-weight="700" fill="#9a3412">🔧 핸들형 손잡이 설치 위치 가이드 (대상: 4·5단 400/600 도어)</text>`;
+  out += `<text x="${x + 16}" y="${y + 20}" class="lbl" font-size="13" font-weight="700" fill="#9a3412">핸들형 손잡이 설치 위치 가이드 (대상: 4·5단 400/600 도어)</text>`;
 
   const lines = [
     { dot: '#dc2626', text: '★ 손잡이 위치 — 도어 후면 보링 4개 중 「바닥면과 가장 가까운 하부 2개」 사용 (도어 길이의 약 58% 지점)' },
@@ -2791,7 +2812,7 @@ function renderEditor(columns) {
   // 임시 보관함
   html += `<div class="staging-row" data-col="staging"
                 ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-    <div class="staging-header">🗂️ 임시 보관함 <span class="count">${stagingParts.length}</span> <span style="font-weight:400;color:#888;font-size:11px;">— 부품을 여기로 드래그해 임시로 빼둘 수 있습니다</span></div>
+    <div class="staging-header">임시 보관함 <span class="count">${stagingParts.length}</span> <span style="font-weight:400;color:#888;font-size:11px;">— 부품을 여기로 드래그해 임시로 빼둘 수 있습니다</span></div>
     <div class="staging-parts">`;
   if (stagingParts.length === 0) {
     html += `<div class="staging-empty">비어 있음</div>`;
