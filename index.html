@@ -281,13 +281,13 @@
   /* 도면 상단 고정 (편집하며 보기) */
   .diagram-card.pinned {
     position: sticky; top: 8px; z-index: 60;
-    max-height: 52vh; overflow: auto;
+    max-height: 66vh; overflow: auto;
     box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
     border: 1px solid #c7d2fe;
   }
   .diagram-card.pinned h2 { font-size: 14px; margin-bottom: 4px; }
   .diagram-card.pinned .hint { display: none; }
-  .diagram-card.pinned #diagram-svg { max-height: 34vh; width: auto; max-width: 100%; margin: 0 auto; }
+  .diagram-card.pinned #diagram-svg { max-height: 52vh; width: auto; max-width: 100%; margin: 0 auto; }
   .diagram-card.pinned .btn-row { margin-top: 4px; }
   .col-move-row {
     display: flex;
@@ -1282,7 +1282,10 @@ function parsePatternFromName(name) {
 }
 
 // 엔드패널 상태 (좌/우 슬롯)
-let currentEPs = { left: null, right: null };
+// EP 슬롯: left/right = 전체 양끝. midLeft/midRight = 두벽면 분할 시 벽면A 오른끝/벽면B 왼끝.
+// (분할 = 코너형일 수도, 맞은편 벽 설치일 수도 있어 네 끝 모두 EP 가능)
+let currentEPs = { left: null, right: null, midLeft: null, midRight: null };
+const EP_SLOT_KEYS = { 'left-ep': 'left', 'right-ep': 'right', 'mid-left-ep': 'midLeft', 'mid-right-ep': 'midRight' };
 
 const EXAMPLES = {
   1: `100111564
@@ -2050,9 +2053,10 @@ function renderDiagram(columns) {
   if (!columns.length) return '';
   const SCALE = 0.25, TIER_H = 90, COL_GAP = 4, BASE_H = 22, TITLE_H = 30;
   const EP_W = 8;
-  const CORNER_GAP = 30; // 두벽면 분할 시 코너 표시 폭
+  const CORNER_GAP = 30; // 두벽면 분할 시 분리 표시 폭
   const splitIdx = effectiveWallSplit(columns);
-  const cornerExtra = splitIdx != null ? CORNER_GAP - COL_GAP : 0;
+  const cornerExtra = splitIdx == null ? 0
+    : CORNER_GAP + (currentEPs.midLeft ? COL_GAP + EP_W : 0) + (currentEPs.midRight ? EP_W : 0);
   const epExtra = (currentEPs.left ? EP_W + COL_GAP : 0) + (currentEPs.right ? EP_W + COL_GAP : 0);
   const drawingWidth = columns.reduce((s,c)=>s + c.width*SCALE, 0) + COL_GAP * (columns.length-1) + epExtra + cornerExtra;
   const drawingHeight = TIER_H*5 + BASE_H;
@@ -2158,8 +2162,7 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
       out += renderEPPanel(x, sy, w, tierH * 5, 'mid');
       out += `<text x="${x + w/2}" y="${sy + tierH*5 + 16}" text-anchor="middle" class="lbl t">EP</text>`;
       if (splitIdx != null && ci === splitIdx) {
-        out += renderCornerStrip(x + w, sy, CORNER_GAP, colHeight);
-        x += w + CORNER_GAP;
+        x = renderWallBoundary(x + w, sy, gap, colHeight, CORNER_GAP, s => { out += s; });
       } else {
         x += w + gap;
       }
@@ -2192,8 +2195,7 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
       out += `<text x="${x + w/2}" y="${sy + tierH*5 + baseH/2 + 16}" text-anchor="middle" class="lbl t">${col.width}mm</text>`;
     }
     if (splitIdx != null && ci === splitIdx) {
-      out += renderCornerStrip(x + w, sy, CORNER_GAP, colHeight);
-      x += w + CORNER_GAP;
+      x = renderWallBoundary(x + w, sy, gap, colHeight, CORNER_GAP, s => { out += s; });
     } else {
       x += w + gap;
     }
@@ -2219,12 +2221,32 @@ function renderSection(columns, sx, sy, scale, tierH, gap, baseH, mode) {
   return out;
 }
 
-// 두벽면(ㄱ자) 코너 표시 — 벽 해칭 스트립. 양쪽 면 모두 벽에 닿으므로 EP 불가.
+// 분할 경계 렌더: [벽면A 우측 EP] + 분리 스트립 + [벽면B 좌측 EP]. 다음 컬럼 시작 x 반환.
+function renderWallBoundary(xEnd, sy, gap, colHeight, cornerGap, emit) {
+  const EP_W = 8;
+  let cx = xEnd;
+  if (currentEPs.midLeft) {
+    cx += gap;
+    emit(renderEPPanel(cx, sy, EP_W, colHeight, 'mid-left'));
+    cx += EP_W;
+  }
+  emit(renderCornerStrip(cx, sy, cornerGap, colHeight));
+  cx += cornerGap;
+  if (currentEPs.midRight) {
+    emit(renderEPPanel(cx, sy, EP_W, colHeight, 'mid-right'));
+    cx += EP_W;
+  }
+  return cx + gap;
+}
+
+// 두벽면 분리 표시 — 코너형/맞은편 설치 모두 가능하므로 벽 단정 없이 중립 표기
 function renderCornerStrip(x, y, gapW, h) {
   const stripW = 14;
   const sx = x + (gapW - stripW) / 2;
-  let out = `<rect x="${sx}" y="${y}" width="${stripW}" height="${h}" fill="url(#wallHatchP)" stroke="#94a3b8" stroke-width="1"/>`;
-  out += `<text x="${sx + stripW/2}" y="${y + h/2}" text-anchor="middle" class="lbl" style="fill:#475569;font-size:9px;font-weight:700;" transform="rotate(-90 ${sx + stripW/2} ${y + h/2})">ㄱ자 코너 (벽)</text>`;
+  let out = `<rect x="${sx}" y="${y}" width="${stripW}" height="${h}" fill="#f8fafc"/>`;
+  out += `<line x1="${sx}" y1="${y}" x2="${sx}" y2="${y + h}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5 4"/>`;
+  out += `<line x1="${sx + stripW}" y1="${y}" x2="${sx + stripW}" y2="${y + h}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5 4"/>`;
+  out += `<text x="${sx + stripW/2}" y="${y + h/2}" text-anchor="middle" class="lbl" style="fill:#475569;font-size:9px;font-weight:700;" transform="rotate(-90 ${sx + stripW/2} ${y + h/2})">벽면 분리 (코너/맞은편)</text>`;
   return out;
 }
 
@@ -2626,7 +2648,7 @@ function generate() {
   // 편집 상태 초기화
   stagingParts = [];
   partIdCounter = 0;
-  currentEPs = { left: null, right: null };
+  currentEPs = { left: null, right: null, midLeft: null, midRight: null };
   currentColumns = blocks.map((skus, i) => buildColumn(skus, i, (lastParseStats.columnMetas || [])[i] || null));
   // 컬럼에 들어간 EP 부품을 빼내 좌/우 슬롯에 배치 (최대 2개)
   extractEndPanelsFromColumns();
@@ -2745,9 +2767,25 @@ function refreshAllUI() {
 }
 
 // ====================== 드래그 편집기 ======================
+// EP 슬롯 공통 마크업
+function epSlotHtml(slotId, headerHtml, part) {
+  return `<div class="edge-slot">
+    <div class="edge-slot-header">${headerHtml}</div>
+    <div class="edge-slot-drop" data-col="${slotId}"
+         ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">`
+    + (part ? renderPartCard(part, slotId) : `<div class="edge-slot-empty">없음<br>(드래그)</div>`)
+    + `</div></div>`;
+}
+
 function renderEditor(columns) {
   const editor = document.getElementById('columns-editor');
   if (!editor) return;
+  // 분할 해제 상태에서 중간 EP 슬롯에 남은 EP는 보관함으로 회수
+  if (effectiveWallSplit(columns) == null) {
+    for (const k of ['midLeft', 'midRight']) {
+      if (currentEPs[k]) { stagingParts.push(currentEPs[k]); currentEPs[k] = null; }
+    }
+  }
   let html = '';
 
   // 임시 보관함
@@ -2768,7 +2806,7 @@ function renderEditor(columns) {
   // 좌측 EP 슬롯
   const splitIdxForEp = effectiveWallSplit(columns);
   html += `<div class="edge-slot">
-    <div class="edge-slot-header">↤ 좌측 EP${splitIdxForEp != null ? '<br><span style="font-weight:400;color:#0369a1;">(벽면A 노출면)</span>' : ''}</div>
+    <div class="edge-slot-header">↤ 좌측 EP${splitIdxForEp != null ? '<br><span style="font-weight:400;color:#0369a1;">(벽면A 좌측)</span>' : ''}</div>
     <div class="edge-slot-drop" data-col="left-ep"
          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">`;
   if (currentEPs.left) {
@@ -2786,8 +2824,14 @@ function renderEditor(columns) {
     if (i > 0 && columns.length >= 2) {
       const bIdx = i - 1;
       const isActive = splitIdx === bIdx;
-      html += `<div class="wall-divider ${isActive ? 'active' : ''}" onclick="toggleWallSplit(${bIdx})"
-        title="${isActive ? '클릭: 두벽면 분할 해제' : '클릭: 여기서 벽면 분할 (ㄱ자 코너)'}">${isActive ? 'ㄱ 코너' : '분할'}</div>`;
+      if (isActive) {
+        // 분할 지점: 벽면A 우측 EP + 경계 + 벽면B 좌측 EP (코너형/맞은편 모두 EP 가능)
+        html += epSlotHtml('mid-left-ep', '벽면A<br>우측 EP ↦', currentEPs.midLeft);
+        html += `<div class="wall-divider active" onclick="toggleWallSplit(${bIdx})" title="클릭: 두벽면 분할 해제">분할됨</div>`;
+        html += epSlotHtml('mid-right-ep', '↤ 벽면B<br>좌측 EP', currentEPs.midRight);
+      } else {
+        html += `<div class="wall-divider" onclick="toggleWallSplit(${bIdx})" title="클릭: 여기서 벽면 분할 (코너형·맞은편 벽 모두)">분할</div>`;
+      }
     }
     const wallTag = splitIdx == null ? '' : (i <= splitIdx ? ' <b style="color:#0369a1;">A</b>' : ' <b style="color:#9a3412;">B</b>');
     const tier = col.tierSum != null ? col.tierSum : 0;
@@ -2823,7 +2867,7 @@ function renderEditor(columns) {
 
   // 우측 EP 슬롯
   html += `<div class="edge-slot">
-    <div class="edge-slot-header">↦ 우측 EP${splitIdxForEp != null ? '<br><span style="font-weight:400;color:#9a3412;">(벽면B 노출면)</span>' : ''}</div>
+    <div class="edge-slot-header">↦ 우측 EP${splitIdxForEp != null ? '<br><span style="font-weight:400;color:#9a3412;">(벽면B 우측)</span>' : ''}</div>
     <div class="edge-slot-drop" data-col="right-ep"
          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">`;
   if (currentEPs.right) {
@@ -2855,7 +2899,7 @@ function renderPartCard(part, location) {
   else label = part.sku;
 
   let actions = '';
-  if (location !== 'staging') {
+  if (location !== 'staging' && !isEPSlot(location)) {
     if (t === 'open' || t === 'body') {
       actions += `<button class="toggle-btn ${isExposed ? 'exposed' : ''}" onclick="event.stopPropagation(); togglePartExposed(${location}, '${part.id}')" title="도어형/오픈형 전환">${isExposed ? '오픈형' : '도어형'}</button>`;
     }
@@ -2905,12 +2949,12 @@ function handleCardDragOver(e) {
   e.preventDefault();
   e.stopPropagation();
 
-  const cardLoc = card.dataset.from === 'staging' ? 'staging' : parseInt(card.dataset.from, 10);
-  // 폭 호환 검사
+  const cardLoc = parseLocation(card.dataset.from);
+  // 호환 검사 (컬럼=폭, EP 슬롯=EP 여부)
   let invalid = false;
   if (cardLoc !== 'staging') {
     const part = findPartByIdAndLocation(dragData.partId, dragData.sourceLocation);
-    if (part && part.width && currentColumns[cardLoc].width !== part.width) invalid = true;
+    if (part && !isDropValid(cardLoc, part)) invalid = true;
   }
   card.classList.remove('drop-above', 'drop-below', 'drop-invalid');
   if (invalid) {
@@ -2945,12 +2989,14 @@ function handleCardDrop(e) {
   }
   e.preventDefault();
   e.stopPropagation();
-  const cardLoc = card.dataset.from === 'staging' ? 'staging' : parseInt(card.dataset.from, 10);
-  // 폭 검사
+  const cardLoc = parseLocation(card.dataset.from);
+  // 호환 검사
   if (cardLoc !== 'staging') {
     const partInfo = findPartByIdAndLocation(dragData.partId, dragData.sourceLocation);
-    if (partInfo && partInfo.width && currentColumns[cardLoc].width !== partInfo.width) {
-      alert(`⚠ 폭이 다른 컬럼으로는 이동할 수 없습니다\n· 부품 폭: ${partInfo.width}mm\n· 대상 컬럼 폭: ${currentColumns[cardLoc].width}mm`);
+    if (partInfo && !isDropValid(cardLoc, partInfo)) {
+      if (typeof cardLoc === 'number' && partInfo.width && currentColumns[cardLoc].width !== partInfo.width) {
+        alert(`⚠ 폭이 다른 컬럼으로는 이동할 수 없습니다\n· 부품 폭: ${partInfo.width}mm\n· 대상 컬럼 폭: ${currentColumns[cardLoc].width}mm`);
+      }
       card.classList.remove('drop-above', 'drop-below', 'drop-invalid');
       dragData = null;
       return;
@@ -2959,7 +3005,12 @@ function handleCardDrop(e) {
   const rect = card.getBoundingClientRect();
   const insertAbove = e.clientY < rect.top + rect.height / 2;
   card.classList.remove('drop-above', 'drop-below', 'drop-invalid');
-  movePartToCardPosition(dragData.partId, dragData.sourceLocation, cardLoc, card.dataset.id, insertAbove);
+  if (isEPSlot(cardLoc)) {
+    // EP 슬롯 카드 위 드롭 = 그 슬롯으로 이동 (순서 개념 없음)
+    movePartLocation(dragData.partId, dragData.sourceLocation, cardLoc);
+  } else {
+    movePartToCardPosition(dragData.partId, dragData.sourceLocation, cardLoc, card.dataset.id, insertAbove);
+  }
   dragData = null;
 }
 
@@ -2970,6 +3021,9 @@ function movePartToCardPosition(partId, fromLoc, toLoc, refPartId, insertAbove) 
   if (fromLoc === 'staging') {
     const i = stagingParts.findIndex(p => p.id === partId);
     if (i >= 0) part = stagingParts.splice(i, 1)[0];
+  } else if (EP_SLOT_KEYS[fromLoc]) {
+    part = currentEPs[EP_SLOT_KEYS[fromLoc]];
+    currentEPs[EP_SLOT_KEYS[fromLoc]] = null;
   } else {
     const col = currentColumns[fromLoc];
     for (const t of ['flap','door','glass','mirror','body','open','drawer']) {
@@ -3099,14 +3153,16 @@ function handleColumnDragEnd(e) {
 
 let dragData = null;
 function parseLocation(raw) {
-  if (raw === 'staging' || raw === 'left-ep' || raw === 'right-ep') return raw;
+  if (raw === 'staging' || EP_SLOT_KEYS[raw]) return raw;
   return parseInt(raw, 10);
 }
-function isEPSlot(loc) { return loc === 'left-ep' || loc === 'right-ep'; }
+function isEPSlot(loc) { return !!EP_SLOT_KEYS[loc]; }
 function getPartFromLocation(partId, loc) {
   if (loc === 'staging') return stagingParts.find(p => p.id === partId);
-  if (loc === 'left-ep') return currentEPs.left && currentEPs.left.id === partId ? currentEPs.left : null;
-  if (loc === 'right-ep') return currentEPs.right && currentEPs.right.id === partId ? currentEPs.right : null;
+  if (EP_SLOT_KEYS[loc]) {
+    const p = currentEPs[EP_SLOT_KEYS[loc]];
+    return p && p.id === partId ? p : null;
+  }
   if (typeof loc === 'number') {
     const col = currentColumns[loc];
     if (!col) return null;
@@ -3250,7 +3306,7 @@ function movePartLocation(partId, fromLoc, toLoc) {
 
   // EP 슬롯에 이미 다른 EP가 있으면 차단
   if (isEPSlot(toLoc)) {
-    const existing = toLoc === 'left-ep' ? currentEPs.left : currentEPs.right;
+    const existing = currentEPs[EP_SLOT_KEYS[toLoc]];
     if (existing && existing.id !== partId) {
       alert('⚠ 이 EP 슬롯에 이미 엔드패널이 있습니다.\n먼저 임시 보관함으로 빼낸 후 다시 이동해주세요.');
       return;
@@ -3262,10 +3318,9 @@ function movePartLocation(partId, fromLoc, toLoc) {
   if (fromLoc === 'staging') {
     const i = stagingParts.findIndex(p => p.id === partId);
     if (i >= 0) part = stagingParts.splice(i, 1)[0];
-  } else if (fromLoc === 'left-ep') {
-    part = currentEPs.left; currentEPs.left = null;
-  } else if (fromLoc === 'right-ep') {
-    part = currentEPs.right; currentEPs.right = null;
+  } else if (EP_SLOT_KEYS[fromLoc]) {
+    part = currentEPs[EP_SLOT_KEYS[fromLoc]];
+    currentEPs[EP_SLOT_KEYS[fromLoc]] = null;
   } else if (typeof fromLoc === 'number') {
     const col = currentColumns[fromLoc];
     for (const t of ['flap','door','glass','mirror','body','open','drawer']) {
@@ -3288,10 +3343,8 @@ function movePartLocation(partId, fromLoc, toLoc) {
   // 4) 타겟에 추가
   if (toLoc === 'staging') {
     stagingParts.push(part);
-  } else if (toLoc === 'left-ep') {
-    currentEPs.left = part;
-  } else if (toLoc === 'right-ep') {
-    currentEPs.right = part;
+  } else if (EP_SLOT_KEYS[toLoc]) {
+    currentEPs[EP_SLOT_KEYS[toLoc]] = part;
   } else if (typeof toLoc === 'number') {
     const col = currentColumns[toLoc];
     col.items[part.type].push(part);
