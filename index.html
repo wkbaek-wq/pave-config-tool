@@ -2153,12 +2153,23 @@ function buildColumn(skus, idx, meta = null) {
     order.push(bodies[0].id);
     for (const d of items.drawer) order.push(d.id);
   } else if (bodies.length >= 2) {
-    // ▼ 짧은장 / 중간 선반장 / 중간 서랍장 등: 중간 부품은 큰 몸통과 작은 몸통 사이
+    // ▼ 몸통 2개 이상. 패턴에 따라 서랍 위치가 다름:
+    //   · 중간 서랍장/중간 선반장: 서랍·오픈이 가운데 (몸통-서랍-몸통)
+    //   · 서랍 짧은장/짧은장: 서랍은 맨 아래 (몸통-몸통-서랍) → 도어가 위쪽을 통으로 가림
+    const pat = (meta && meta.pattern) || '';
+    const drawerAtBottom = /서랍 짧은장|짧은장/.test(pat) && !/중간/.test(pat);
     for (const f of items.flap) order.push(f.id);
-    order.push(bodies[0].id);                        // 큰 몸통 (위)
-    for (const o of items.open) order.push(o.id);    // 오픈 (중간)
-    for (const d of items.drawer) order.push(d.id);  // 서랍 (중간)
-    for (let i = 1; i < bodies.length; i++) order.push(bodies[i].id); // 작은 몸통(들) (아래)
+    if (drawerAtBottom) {
+      order.push(bodies[0].id);                          // 큰 몸통 (위)
+      for (let i = 1; i < bodies.length; i++) order.push(bodies[i].id); // 작은 몸통(들)
+      for (const o of items.open) order.push(o.id);      // 오픈 (아래)
+      for (const d of items.drawer) order.push(d.id);    // 서랍 (맨 아래)
+    } else {
+      order.push(bodies[0].id);                          // 큰 몸통 (위)
+      for (const o of items.open) order.push(o.id);      // 오픈 (중간)
+      for (const d of items.drawer) order.push(d.id);    // 서랍 (중간)
+      for (let i = 1; i < bodies.length; i++) order.push(bodies[i].id); // 작은 몸통(들) (아래)
+    }
   } else {
     // ▼ 몸통 없는 경우 (부속 옵션 등)
     for (const f of items.flap) order.push(f.id);
@@ -2203,12 +2214,21 @@ function arrangeInternals(col) {
     parts.push({ kind: 'body', tier: bodies[0].tier, label: `몸통 ${bodies[0].tier}단` });
     for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
   } else if (bodies.length >= 2) {
-    // 짧은장 / 중간 선반장 / 중간 서랍장: 중간 부품(오픈·서랍)은 큰 몸통과 작은 몸통 사이
+    // 패턴에 따라 서랍 위치 분기 (buildColumn과 동일 규칙)
+    const pat = (col.meta && col.meta.pattern) || '';
+    const drawerAtBottom = /서랍 짧은장|짧은장/.test(pat) && !/중간/.test(pat);
     for (const f of col.items.flap) parts.push({ kind: 'flap', tier: f.tier, label: '플랩장' });
-    parts.push({ kind: 'body', tier: bodies[0].tier, label: `몸통 ${bodies[0].tier}단` });
-    for (const o of col.items.open) parts.push({ kind: 'open', tier: o.tier, label: '오픈장' });
-    for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
-    for (let i = 1; i < bodies.length; i++) parts.push({ kind: 'body', tier: bodies[i].tier, label: `몸통 ${bodies[i].tier}단` });
+    if (drawerAtBottom) {
+      parts.push({ kind: 'body', tier: bodies[0].tier, label: `몸통 ${bodies[0].tier}단` });
+      for (let i = 1; i < bodies.length; i++) parts.push({ kind: 'body', tier: bodies[i].tier, label: `몸통 ${bodies[i].tier}단` });
+      for (const o of col.items.open) parts.push({ kind: 'open', tier: o.tier, label: '오픈장' });
+      for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
+    } else {
+      parts.push({ kind: 'body', tier: bodies[0].tier, label: `몸통 ${bodies[0].tier}단` });
+      for (const o of col.items.open) parts.push({ kind: 'open', tier: o.tier, label: '오픈장' });
+      for (const d of col.items.drawer) parts.push({ kind: 'drawer', tier: d.tier, label: '서랍장' });
+      for (let i = 1; i < bodies.length; i++) parts.push({ kind: 'body', tier: bodies[i].tier, label: `몸통 ${bodies[i].tier}단` });
+    }
   } else {
     for (const f of col.items.flap)  parts.push({ kind: 'flap', tier: f.tier, label: '플랩장' });
     for (const o of col.items.open)  parts.push({ kind: 'open', tier: o.tier, label: '오픈장' });
