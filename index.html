@@ -2157,7 +2157,10 @@ function buildColumn(skus, idx, meta = null) {
     //   · 중간 서랍장/중간 선반장: 서랍·오픈이 가운데 (몸통-서랍-몸통)
     //   · 서랍 짧은장/짧은장: 서랍은 맨 아래 (몸통-몸통-서랍) → 도어가 위쪽을 통으로 가림
     const pat = (meta && meta.pattern) || '';
-    const drawerAtBottom = /서랍 짧은장|짧은장/.test(pat) && !/중간/.test(pat);
+    // v2 일반규칙: 이름(패턴) 무관 — 구성으로 판단.
+    // 중간 서랍장/선반장(몸통-가운데-몸통이 정답)만 보호하고,
+    // 그 외 [서랍 있음 + 오픈장 없음]이면 서랍을 맨 아래로 (도어가 위쪽 몸통을 통으로 가림).
+    const drawerAtBottom = !/중간/.test(pat) && items.drawer.length > 0 && items.open.length === 0;
     for (const f of items.flap) order.push(f.id);
     if (drawerAtBottom) {
       order.push(bodies[0].id);                          // 큰 몸통 (위)
@@ -2216,7 +2219,7 @@ function arrangeInternals(col) {
   } else if (bodies.length >= 2) {
     // 패턴에 따라 서랍 위치 분기 (buildColumn과 동일 규칙)
     const pat = (col.meta && col.meta.pattern) || '';
-    const drawerAtBottom = /서랍 짧은장|짧은장/.test(pat) && !/중간/.test(pat);
+    const drawerAtBottom = !/중간/.test(pat) && col.items.drawer.length > 0 && col.items.open.length === 0;
     for (const f of col.items.flap) parts.push({ kind: 'flap', tier: f.tier, label: '플랩장' });
     if (drawerAtBottom) {
       parts.push({ kind: 'body', tier: bodies[0].tier, label: `몸통 ${bodies[0].tier}단` });
